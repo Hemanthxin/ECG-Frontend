@@ -152,7 +152,7 @@ function MedicalECG({ signals, leadList, recordId }) {
     return ()=>ro.disconnect();
   },[draw]);
 
-  return <div ref={wrapRef} style={{width:"100%"}}><canvas ref={canvasRef} style={{display:"block",width:"100%"}}/></div>;
+  return <div ref={wrapRef} style={{width:"100%", maxWidth: "100%", overflow: "hidden"}}><canvas ref={canvasRef} style={{display:"block",width:"100%"}}/></div>;
 }
 
 /* ─── Constants ───────────────────────────────────────────────────────────── */
@@ -180,9 +180,7 @@ export default function UploadECG() {
     {key:"original", label:t('tab_original')},
     {key:"overlay",  label:t('tab_overlay')},
     {key:"leads",    label:t('tab_leads')},
-    {key:"medical",  label:t('tab_medical')},
-    
-    
+    {key:"medical",  label:"Output Image"}, // Renamed from Medical ECG
   ];
 
   const recordId = file ? (file.name.replace(/\.[^.]+$/,"").replace(/[^0-9]/g,"")||file.name.replace(/\.[^.]+$/,"")) : "";
@@ -208,13 +206,13 @@ export default function UploadECG() {
     setLoading(false);
   };
 
-  const card    = { background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:16, padding:"22px 24px", marginBottom:20, boxShadow:T.cardShadow };
+  const card    = { background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:16, padding:"22px 24px", marginBottom:20, boxShadow:T.cardShadow, width: "100%", boxSizing: "border-box" };
   const cardTtl = { fontSize:11, fontWeight:700, color:T.textMuted, letterSpacing:1, textTransform:"uppercase", marginBottom:14 };
-  const statCard= { flex:1, minWidth:100, background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:14, padding:"16px 18px", boxShadow:T.cardShadow };
-  const tabBase = { padding:"8px 18px", borderRadius:9, border:"none", cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"'DM Sans',sans-serif", transition:"all .15s" };
+  const statCard= { flex:"1 1 calc(50% - 14px)", minWidth:110, background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:14, padding:"16px 18px", boxShadow:T.cardShadow, boxSizing: "border-box" };
+  const tabBase = { flex: "1 1 auto", textAlign: "center", padding:"8px 18px", borderRadius:9, border:"none", cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"'DM Sans',sans-serif", transition:"all .15s" };
 
   return (
-    <div style={{ fontFamily:"'DM Sans',sans-serif", background:T.pageBg, minHeight:"100vh", padding:"28px 32px" }}>
+    <div style={{ fontFamily:"'DM Sans',sans-serif", background:T.pageBg, minHeight:"100vh", padding:"clamp(16px, 4vw, 32px)", width: "100%", boxSizing: "border-box", overflowX: "hidden" }}>
       <style>{`
         @keyframes ecgpulse { 0%,100% { opacity:1 } 50% { opacity:.35 } } 
         @keyframes ecgspin { to { transform:rotate(360deg) } }
@@ -223,7 +221,7 @@ export default function UploadECG() {
       `}</style>
 
       {/* Header */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:24}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:24, flexWrap: "wrap", gap: 16}}>
         <div>
           <h1 style={{fontSize:22,fontWeight:700,color:T.textPrimary,marginBottom:2}}>{t('upload_title')}</h1>
           <p style={{fontSize:12,color:T.textMuted}}>{t('upload_sub')}</p>
@@ -242,10 +240,12 @@ export default function UploadECG() {
             <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
-            {file ? file.name : t('upload_choose')}
+            <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {file ? file.name : t('upload_choose')}
+            </span>
             <input type="file" accept="image/*" style={{display:"none"}} onChange={onFile}/>
           </label>
-          <button onClick={onAnalyze} disabled={loading||!file} style={{padding:"13px 30px",borderRadius:10,border:"none",background:loading||!file?"#e5e7eb":`linear-gradient(135deg,${T.accent},${T.accentHover})`,color:loading||!file?"#9ca3af":"#fff",fontWeight:700,fontSize:13,cursor:loading||!file?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:loading||!file?"none":`0 2px 14px ${T.accent}44`,transition:"all .18s",whiteSpace:"nowrap"}}>
+          <button onClick={onAnalyze} disabled={loading||!file} style={{flex: "1 1 auto", justifyContent: "center", padding:"13px 30px",borderRadius:10,border:"none",background:loading||!file?"#e5e7eb":`linear-gradient(135deg,${T.accent},${T.accentHover})`,color:loading||!file?"#9ca3af":"#fff",fontWeight:700,fontSize:13,cursor:loading||!file?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:loading||!file?"none":`0 2px 14px ${T.accent}44`,transition:"all .18s",whiteSpace:"nowrap"}}>
             {loading
               ? <><span style={{display:"inline-block",width:13,height:13,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"ecgspin .7s linear infinite"}}/> {t('upload_processing')}</>
               : <><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> {t('upload_analyze')}</>
@@ -258,7 +258,7 @@ export default function UploadECG() {
       {/* Unique ECG Loader Animation */}
       {loading && (
         <div style={{ textAlign: "center", padding: "60px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 24, background: T.cardBg, borderRadius: 16, border: `1px solid ${T.cardBorder}`, boxShadow: T.cardShadow }}>
-          <svg width="220" height="80" viewBox="0 0 220 80" style={{ overflow: "visible" }}>
+          <svg width="220" height="80" viewBox="0 0 220 80" style={{ overflow: "visible", maxWidth: "100%" }}>
             {/* Background faded track */}
             <path
               d="M 0 40 L 40 40 L 50 15 L 65 75 L 85 5 L 105 65 L 115 40 L 220 40"
@@ -293,12 +293,11 @@ export default function UploadECG() {
       {result && !loading && (
         <>
           {/* Stats */}
-          <div style={{display:"flex",gap:14,marginBottom:20,flexWrap:"wrap"}}>
+          <div style={{display:"flex",gap:14,marginBottom:20,flexWrap:"wrap", width: "100%"}}>
             {[
               {label:t('upload_leads'),   val: result.lead_list?.length ?? 0},
               {label:t('upload_samples'), val: result.signals?.II?.length?.toLocaleString() ?? "—"},
               {label:t('upload_duration'),val: result.computed_duration ? `${result.computed_duration}s` : result.signals?.II ? `${(result.signals.II.length/500).toFixed(1)}s` : "—"},
-              {label:t('upload_snr'),     val: result.computed_snr ? `${result.computed_snr} dB` : "—"},
               {label:t('upload_record'),  val: recordId || "—"},
             ].map(s=>(
               <div key={s.label} style={statCard}>
@@ -309,7 +308,7 @@ export default function UploadECG() {
           </div>
 
           {/* Tabs */}
-          <div style={{display:"flex",gap:4,flexWrap:"wrap",background:T.cardBg,padding:5,borderRadius:12,border:`1px solid ${T.cardBorder}`,width:"fit-content",marginBottom:22,boxShadow:T.cardShadow}}>
+          <div style={{display:"flex",gap:4,flexWrap:"wrap",background:T.cardBg,padding:5,borderRadius:12,border:`1px solid ${T.cardBorder}`,width:"100%",marginBottom:22,boxShadow:T.cardShadow, boxSizing: "border-box"}}>
             {TABS.map(tb=>(
               <button key={tb.key} onClick={()=>setTab(tb.key)} style={{
                 ...tabBase,
@@ -320,13 +319,13 @@ export default function UploadECG() {
             ))}
           </div>
 
-          {/* ── Medical ECG ── */}
+          {/* ── Output Image (Medical ECG) ── */}
           {tab==="medical" && (
             <div>
               <div style={{fontSize:11,fontWeight:700,color:T.textMuted,letterSpacing:1,textTransform:"uppercase",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
-                Medical Grade — Full 12-Lead ECG <div style={{flex:1,height:1,background:T.headingLine}}/>
+                Output Image — Full 12-Lead ECG <div style={{flex:1,height:1,background:T.headingLine}}/>
               </div>
-              <div style={{background:"#fce8e8",borderRadius:14,overflow:"hidden",border:"1.5px solid #f0c0c0",boxShadow:"0 4px 20px rgba(0,0,0,.09)"}}>
+              <div style={{background:"#fce8e8",borderRadius:14,overflow:"hidden",border:"1.5px solid #f0c0c0",boxShadow:"0 4px 20px rgba(0,0,0,.09)", width: "100%", boxSizing: "border-box"}}>
                 <MedicalECG signals={result.signals} leadList={result.lead_list} recordId={recordId}/>
               </div>
               <div style={{display:"flex",gap:20,marginTop:10,flexWrap:"wrap"}}>
@@ -405,14 +404,14 @@ export default function UploadECG() {
               <div style={{fontSize:11,fontWeight:700,color:T.textMuted,letterSpacing:1,textTransform:"uppercase",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
                 Original ECG Image <div style={{flex:1,height:1,background:T.headingLine}}/>
               </div>
-              <div style={{background:T.cardBg,border:`1.5px solid ${T.cardBorder}`,borderRadius:14,overflow:"hidden",boxShadow:"0 4px 18px rgba(0,0,0,.07)"}}>
+              <div style={{background:T.cardBg,border:`1.5px solid ${T.cardBorder}`,borderRadius:14,overflow:"hidden",boxShadow:"0 4px 18px rgba(0,0,0,.07)", width: "100%", boxSizing: "border-box"}}>
                 <div style={{padding:"11px 18px",borderBottom:`1px solid ${T.divider}`,display:"flex",alignItems:"center",gap:6,background:T.inputBg}}>
                   <span style={{width:10,height:10,borderRadius:"50%",background:"#ff5f57",display:"inline-block"}}/>
                   <span style={{width:10,height:10,borderRadius:"50%",background:"#febc2e",display:"inline-block"}}/>
                   <span style={{width:10,height:10,borderRadius:"50%",background:"#28c840",display:"inline-block"}}/>
-                  <span style={{marginLeft:8,fontSize:12,color:T.textMuted,fontFamily:"'DM Mono',monospace"}}>{file?.name}</span>
+                  <span style={{marginLeft:8,fontSize:12,color:T.textMuted,fontFamily:"'DM Mono',monospace", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{file?.name}</span>
                 </div>
-                <img src={previewUrl} alt="Original ECG" style={{width:"100%",display:"block",objectFit:"contain",background:"#fff",padding:12,maxHeight:720}}/>
+                <img src={previewUrl} alt="Original ECG" style={{width:"100%",display:"block",objectFit:"contain",background:"#fff",padding:12,maxHeight:720, boxSizing: "border-box"}}/>
               </div>
             </div>
           )}
