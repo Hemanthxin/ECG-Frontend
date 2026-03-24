@@ -2,19 +2,20 @@ import React, { useState } from 'react';
 import { Heart, Award, Users, Microscope, MapPin, Mail, FileText, X, ChevronRight } from 'lucide-react';
 import { useTheme }    from '../pages/Themecontext';
 import { useLanguage } from '../context/LanguageContext';
+import { useResponsive } from '../hooks/useresponsive';
 
-// ── Update src paths to match your actual files ──
+// ── Changed paths to absolute public paths (/assets/...) for Vercel ──
+// IMPORTANT: Move your 'assets' folder from 'src/assets' to 'public/assets'
 const LEADERSHIP = [
-  { id:'director', name:'DR. USHA MANJUNATH',  role:'Professor & Director, IIHMR Bangalore',               src:'src/assets/Screenshot 2026-03-19 220050.png', bio:'Professor with 25+ years of experience. Leads the IIHMR institute and its AI healthcare initiatives.', email:'director@ihmr.ai', tags:['Healthcare Management','AI Research','Leadership'] },
-  { id:'admire',   name:'DR. AKASH PRABHUNE',  role:'Assistant Professor & Lead ADMIRE, IIHMR Bangalore',  src:'src/assets/Screenshot 2026-03-19 221444.png', bio:'Lead of AI-driven Medical Research (ADMIRE) program. Spearheads cross-disciplinary projects combining cardiology, data science, and clinical outcomes.', email:'admire@ihmr.ai', tags:['ADMIRE Lead','Clinical AI','Dentist'] },
+  { id:'director', name:'DR. USHA MANJUNATH',  role:'Professor & Director, IIHMR Bangalore',             src:'/assets/Screenshot 2026-03-19 220050.png', bio:'Professor with 25+ years of experience. Leads the IIHMR institute and its AI healthcare initiatives.', email:'director@ihmr.ai', tags:['Healthcare Management','AI Research','Leadership'] },
+  { id:'admire',   name:'DR. AKASH PRABHUNE',  role:'Assistant Professor & Lead ADMIRE, IIHMR Bangalore',  src:'/assets/Screenshot 2026-03-19 221444.png', bio:'Lead of AI-driven Medical Research (ADMIRE) program. Spearheads cross-disciplinary projects combining cardiology, data science, and clinical outcomes.', email:'admire@ihmr.ai', tags:['ADMIRE Lead','Clinical AI','Dentist'] },
 ];
 
 const TEAM = [
-  { id:'rk', name:'MR. VINAY R SRIHARI',  role:'Assistant Professor, IIHMR Bangalore',  src:'src/assets/image.png',                              bio:'Expert in health management research and AI-driven medical solutions.', tags:['Health Management','Research','AI'] },
+  { id:'rk', name:'MR. VINAY R SRIHARI',  role:'Assistant Professor, IIHMR Bangalore',  src:'/assets/image.png',                              bio:'Expert in health management research and AI-driven medical solutions.', tags:['Health Management','Research','AI'] },
   { id:'ar', name:'MS. GNANASIRI',        role:'Data Scientist, IIHMR Bangalore',                src:'https://randomuse.me/api/portraits/women/29.jpg',   bio:'Built the nnUNet-Based ECG digitization pipeline.', tags:['nnUNet','Research','Healthcare AI'] },
-  { id:'hr', name:'MS. AKILA',    role:'Data scientist, IIHMR Bangalore',                           src:'src/assets/Akila.png',        bio:'Built the nnUNet-Based ECG digitization pipeline.',    tags:['PyTorch','YOLO','Signal Processing'] },
-  { id:'ps', name:'MR. HEMANTH B',        role:'AIML Engineer, IIHMR Bangalore',        src:'src/assets/1000136526.jpg',                          bio:'Built the YOLO-based ECG digitization pipeline.', tags:['ECG Digitization','YOLO','Signal Processing'] },
-  
+  { id:'hr', name:'MS. AKILA',    role:'Data scientist, IIHMR Bangalore',                              src:'/assets/Akila.png',        bio:'Built the nnUNet-Based ECG digitization pipeline.',    tags:['PyTorch','YOLO','Signal Processing'] },
+  { id:'ps', name:'MR. HEMANTH B',        role:'AIML Engineer, IIHMR Bangalore',        src:'/assets/1000136526.jpg',                          bio:'Built the YOLO-based ECG digitization pipeline.', tags:['ECG Digitization','YOLO','Signal Processing'] },
 ];
 
 const PAPERS = [
@@ -23,7 +24,7 @@ const PAPERS = [
 
 function PaperModal({ paper, T, onClose, t }) {
   return (
-    <div style={{ position:'fixed', inset:0, background:T.modalBack, display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:16 }} onClick={onClose}>
+    <div style={{ position:'fixed', inset:0, background:T.modalBack, display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:16 }} onClick={onClose}>
       <div style={{ background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:20, width:'100%', maxWidth:560, boxShadow:'0 20px 60px rgba(0,0,0,0.35)', maxHeight:'90vh', overflowY:'auto' }} onClick={e=>e.stopPropagation()}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', padding:'20px 24px', borderBottom:`1px solid ${T.divider}` }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
@@ -62,20 +63,23 @@ function PersonPhoto({ src, name, size, radius }) {
 export default function AboutUs() {
   const { theme: T } = useTheme();
   const { t }        = useLanguage();
+  const { isMobile, isTablet } = useResponsive();
   const [activePaper, setActivePaper] = useState(null);
+
   const card = { background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:18, boxShadow:T.cardShadow };
+  const pagePadding = isMobile ? '20px 16px' : isTablet ? '24px 20px' : '32px 40px';
 
   return (
-    <div style={{ padding:'32px 40px', background:T.pageBg, minHeight:'100%' }}>
+    <div style={{ padding: pagePadding, background:T.pageBg, minHeight:'100%' }}>
 
       {/* Hero */}
-      <div style={{ background:`linear-gradient(135deg,${T.accent},${T.accentHover})`, borderRadius:20, padding:'28px 32px', marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:16 }}>
+      <div style={{ background:`linear-gradient(135deg,${T.accent},${T.accentHover})`, borderRadius:20, padding: isMobile ? '24px 20px' : '28px 32px', marginBottom:24, display:'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent:'space-between', alignItems: isMobile ? 'flex-start' : 'flex-start', flexWrap:'wrap', gap:16 }}>
         <div>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
             <div style={{ width:32, height:32, borderRadius:9, background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center' }}><Heart size={16} color="#fff"/></div>
             <span style={{ color:'rgba(255,255,255,0.8)', fontSize:12, fontWeight:500 }}>IHMR.AI</span>
           </div>
-          <h1 style={{ color:'#fff', fontSize:22, fontWeight:700, marginBottom:8 }}>Institute of Health Management Research</h1>
+          <h1 style={{ color:'#fff', fontSize: isMobile ? 20 : 22, fontWeight:700, marginBottom:8 }}>Institute of Health Management Research</h1>
           <p style={{ color:'rgba(255,255,255,0.8)', fontSize:13, lineHeight:1.6, maxWidth:520 }}>
             Institute of Health Management Research (IIHMR), Bangalore, is a premier institution specializing in healthcare management education, research, and training. Established in 2004, it serves as the South Campus of the IIHMR Group.
           </p>
@@ -90,9 +94,9 @@ export default function AboutUs() {
       </div>
 
       {/* Stats */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>
+      <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4,1fr)', gap:14, marginBottom:24 }}>
         {[
-          { icon:Heart,      label:'ECGs Digitized',  value:'100+',           click:false },
+          { icon:Heart,      label:'ECGs Digitized',  value:'100+',          click:false },
           { icon:Award,      label:'Avg SNR Score',    value:'14.4 dB',        click:false },
           { icon:Users,      label:'Hospitals Served', value:'1',              click:false },
           { icon:Microscope, label:t('about_papers'),  value:`${PAPERS.length}`, click:true },
@@ -111,7 +115,7 @@ export default function AboutUs() {
       </div>
 
       {/* Mission + Tech */}
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:28 }}>
+      <div style={{ display:'grid', gridTemplateColumns: isMobile || isTablet ? '1fr' : '1fr 1fr', gap:16, marginBottom:28 }}>
         {[
           { key:'Our Web App', body:'To digitize, democratize, and decode the 12-lead ECG — transforming paper records into structured, AI-ready signals that cardiologists can act on instantly.' },
           { key:'about_tech',    body:'Our pipeline combines YOLO-based row detection, ORB feature matching for image alignment, and a custom nnUNet model for segmentation — achieving an average SNR of 14.4 dB.' },
@@ -129,16 +133,16 @@ export default function AboutUs() {
           <h2 style={{ fontSize:14, fontWeight:700, color:T.textPrimary }}>{t('about_leadership')}</h2>
           <div style={{ flex:1, height:1, background:T.divider }}/>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile || isTablet ? '1fr' : '1fr 1fr', gap:18 }}>
           {LEADERSHIP.map(person=>(
-            <div key={person.id} style={{ ...card, padding:24, display:'flex', gap:22, alignItems:'flex-start' }}>
-              <PersonPhoto src={person.src} name={person.name} size={160} radius={20}/>
+            <div key={person.id} style={{ ...card, padding:24, display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:22, alignItems: isMobile ? 'center' : 'flex-start', textAlign: isMobile ? 'center' : 'left' }}>
+              <PersonPhoto src={person.src} name={person.name} size={isMobile ? 120 : 160} radius={20}/>
               <div style={{ flex:1, minWidth:0 }}>
                 <h3 style={{ fontSize:16, fontWeight:700, color:T.textPrimary, marginBottom:3 }}>{person.name}</h3>
                 <div style={{ display:'inline-block', fontSize:11, fontWeight:700, color:T.accentText, background:T.accent, padding:'2px 10px', borderRadius:20, marginBottom:10 }}>{person.role}</div>
                 <p style={{ fontSize:12.5, color:T.textSecondary, lineHeight:1.7, marginBottom:12 }}>{person.bio}</p>
-                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:12 }}><Mail size={11} color={T.textMuted}/><span style={{ fontSize:11, color:T.textMuted }}>{person.email}</span></div>
-                <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent: isMobile ? 'center' : 'flex-start', gap:6, marginBottom:12 }}><Mail size={11} color={T.textMuted}/><span style={{ fontSize:11, color:T.textMuted }}>{person.email}</span></div>
+                <div style={{ display:'flex', flexWrap:'wrap', justifyContent: isMobile ? 'center' : 'flex-start', gap:5 }}>
                   {person.tags.map(tag=><span key={tag} style={{ fontSize:10, fontWeight:500, padding:'3px 9px', borderRadius:20, background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33` }}>{tag}</span>)}
                 </div>
               </div>
@@ -153,14 +157,14 @@ export default function AboutUs() {
           <h2 style={{ fontSize:14, fontWeight:700, color:T.textPrimary }}>{t('about_team')}</h2>
           <div style={{ flex:1, height:1, background:T.divider }}/>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4,1fr)', gap:16 }}>
           {TEAM.map(member=>(
             <div key={member.id} style={{ ...card, padding:22, display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center' }}>
-              <PersonPhoto src={member.src} name={member.name} size={180} radius={16}/>
+              <PersonPhoto src={member.src} name={member.name} size={isMobile ? 100 : 180} radius={16}/>
               <div style={{ marginTop:16, width:'100%' }}>
                 <div style={{ fontSize:14, fontWeight:700, color:T.textPrimary, marginBottom:3 }}>{member.name}</div>
                 <div style={{ fontSize:11, fontWeight:700, color:T.accent, marginBottom:10 }}>{member.role}</div>
-                <p style={{ fontSize:12, color:T.textMuted, lineHeight:1.65, marginBottom:14, textAlign:'left' }}>{member.bio}</p>
+                <p style={{ fontSize:12, color:T.textMuted, lineHeight:1.65, marginBottom:14, textAlign: isMobile ? 'center' : 'left' }}>{member.bio}</p>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:5, justifyContent:'center' }}>
                   {member.tags.map(tag=><span key={tag} style={{ fontSize:10, fontWeight:500, padding:'3px 9px', borderRadius:20, background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33` }}>{tag}</span>)}
                 </div>
@@ -191,9 +195,11 @@ export default function AboutUs() {
                 <div style={{ fontSize:13, fontWeight:600, color:T.textPrimary, marginBottom:3, lineHeight:1.4 }}>{paper.title}</div>
                 <div style={{ fontSize:11, color:T.textMuted }}><span style={{ color:T.accent, fontWeight:500 }}>{paper.authors}</span>&nbsp;·&nbsp;{paper.journal}&nbsp;·&nbsp;<span style={{ fontWeight:600 }}>{paper.year}</span></div>
               </div>
-              <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, fontWeight:600, color:T.accent, background:`${T.accent}12`, padding:'6px 14px', borderRadius:20, border:`1px solid ${T.accent}33`, flexShrink:0 }}>
-                <FileText size={12}/> {t('about_open_pdf')}
-              </div>
+              {!isMobile && (
+                <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, fontWeight:600, color:T.accent, background:`${T.accent}12`, padding:'6px 14px', borderRadius:20, border:`1px solid ${T.accent}33`, flexShrink:0 }}>
+                  <FileText size={12}/> {t('about_open_pdf')}
+                </div>
+              )}
               <ChevronRight size={16} color={T.textMuted}/>
             </div>
           ))}
