@@ -1,9 +1,0 @@
-requests
-black
-flake8
-react
-react-dom
-vite
-tailwindcss
-postcss
-autoprefixer
