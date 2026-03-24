@@ -6,9 +6,6 @@ import { useTheme }      from '../pages/Themecontext';
 import { useLanguage }   from '../context/LanguageContext';
 import { useResponsive } from '../hooks/useresponsive';
 
-// Note: If you prefer to import the image, you can do so here:
-// import Logo from '../assets/cropped-cropped-IIHMR-Logo-03.png';
-
 export default function DashboardLayout() {
   const location  = useLocation();
   const navigate  = useNavigate();
@@ -22,10 +19,8 @@ export default function DashboardLayout() {
 
   const isMobileOrTablet = isMobile || isTablet;
 
-  // Close sidebar on route change
   useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
 
-  // Lock body scroll when sidebar open on mobile
   useEffect(() => {
     document.body.style.overflow = (sidebarOpen && isMobileOrTablet) ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
@@ -67,10 +62,29 @@ export default function DashboardLayout() {
 
   const isProfileActive = location.pathname === '/profile';
 
+  /* ── Sidebar content (shared between desktop sidebar and mobile drawer) ── */
   const SidebarInner = () => (
     <>
       <div>
-        {/* App logo / profile link */}
+        {/* ── Desktop: Logo at top of sidebar ── */}
+        {!isMobileOrTablet && (
+          <div style={{
+            padding: '12px 14px 18px',
+            borderBottom: `1px solid ${T.divider}`,
+            marginBottom: 16,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <img
+              src="/cropped-cropped-IIHMR-Logo-03.png"
+              alt="IIHMR Logo"
+              style={{ height: 44, width: 'auto', objectFit: 'contain', maxWidth: '100%' }}
+            />
+          </div>
+        )}
+
+        {/* Profile link */}
         <Link to="/profile" style={{
           display:'flex', alignItems:'center', gap:10,
           padding:'10px 12px', borderRadius:12, marginBottom:16,
@@ -141,44 +155,60 @@ export default function DashboardLayout() {
     </>
   );
 
+  /* ── MOBILE TOP BAR HEIGHT — bigger so logo is clearly visible ── */
+  const TOPBAR_HEIGHT = isMobile ? 64 : 68;
+
   return (
     <div style={{ display:'flex', height:'100vh', background:T.pageBg, overflow:'hidden', position:'relative' }}>
 
-      {/* ── MOBILE: Overlay ── */}
+      {/* ── MOBILE: Overlay behind drawer ── */}
       {isMobileOrTablet && sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          style={{
-            position:'fixed', inset:0, background:'rgba(0,0,0,0.5)',
-            zIndex:40, cursor:'pointer',
-          }}
+          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:40, cursor:'pointer' }}
         />
       )}
 
-      {/* ── MOBILE: Top Solid Header Bar (Fixes scrolling overlap) ── */}
+      {/* ── MOBILE / TABLET: Top header bar ── */}
       {isMobileOrTablet && (
         <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, height: 60,
-          background: T.pageBg, borderBottom: `1px solid ${T.divider}`,
-          zIndex: 45, display: 'flex', alignItems: 'center', padding: '0 16px',
+          position: 'fixed', top: 0, left: 0, right: 0,
+          height: TOPBAR_HEIGHT,
+          background: T.sidebarBg,
+          borderBottom: `1px solid ${T.divider}`,
+          zIndex: 45,
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 16px',
+          gap: 14,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
         }}>
+          {/* Hamburger */}
           <button
             onClick={() => setSidebarOpen(v => !v)}
             style={{
-              width: 38, height: 38, borderRadius: 10,
+              width: 40, height: 40, borderRadius: 10, flexShrink: 0,
               background: T.cardBg, border: `1px solid ${T.cardBorder}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+              cursor: 'pointer', boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
             }}
           >
-            {sidebarOpen ? <CloseIcon size={18} color={T.textPrimary}/> : <Menu size={18} color={T.textPrimary}/>}
+            {sidebarOpen
+              ? <CloseIcon size={20} color={T.textPrimary}/>
+              : <Menu size={20} color={T.textPrimary}/>
+            }
           </button>
-          
-          {/* Replaced text with the logo image */}
-          <img 
-            src="/cropped-cropped-IIHMR-Logo-03.png" 
-            alt="IIHMR Logo" 
-            style={{ marginLeft: 16, height: 32, width: 'auto', objectFit: 'contain' }} 
+
+          {/* Logo — bigger and properly sized */}
+          <img
+            src="/cropped-cropped-IIHMR-Logo-03.png"
+            alt="IIHMR Logo"
+            style={{
+              height: isMobile ? 38 : 44,
+              width: 'auto',
+              objectFit: 'contain',
+              maxWidth: 'calc(100vw - 120px)',  // never overflow the screen
+            }}
           />
         </div>
       )}
@@ -191,7 +221,7 @@ export default function DashboardLayout() {
         borderRight: `1px solid ${T.sidebarBorder}`,
         display: 'flex',
         flexDirection: 'column',
-        padding: '20px 12px',
+        padding: '16px 12px 20px',
         justifyContent: 'space-between',
         overflowY: 'auto',
         ...(isMobileOrTablet ? {
@@ -202,22 +232,23 @@ export default function DashboardLayout() {
           transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
           transition: 'transform 0.25s ease',
           boxShadow: sidebarOpen ? '4px 0 24px rgba(0,0,0,0.2)' : 'none',
+          paddingTop: 20,
         } : {
           position: 'relative',
           height: '100vh',
+          paddingTop: 0,
         }),
       }}>
         <SidebarInner/>
       </aside>
 
-      {/* ── MAIN ── */}
+      {/* ── MAIN content ── */}
       <main style={{
         flex: 1,
         overflowY: 'auto',
         background: T.pageBg,
         minWidth: 0,
-        // Push content down on mobile so it doesn't hide under the new top bar
-        paddingTop: isMobileOrTablet ? 60 : 0, 
+        paddingTop: isMobileOrTablet ? TOPBAR_HEIGHT : 0,
       }}>
         <Outlet/>
       </main>
