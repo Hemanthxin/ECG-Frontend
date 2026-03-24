@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Mail, MessageCircle, FileText, Search, Check, Phone } from 'lucide-react';
 import { useTheme }    from '../pages/Themecontext';
 import { useLanguage } from '../context/LanguageContext';
+import { useResponsive } from '../hooks/useresponsive';
 
 const faqs = [
   { q:'What image formats are supported for ECG upload?', a:'PNG, JPG, JPEG, and BMP are all supported. For best results, use a high-resolution scan (≥300 DPI) with good contrast and no glare.' },
@@ -34,6 +35,8 @@ function FAQItem({ q, a, T }) {
 export default function HelpSupport() {
   const { theme: T } = useTheme();
   const { t }        = useLanguage();
+  const { isMobile, isTablet } = useResponsive();
+  
   const [name,    setName]    = useState('');
   const [email,   setEmail]   = useState('');
   const [subject, setSubject] = useState('');
@@ -45,16 +48,10 @@ export default function HelpSupport() {
 
   const handleSend = (e) => {
     e.preventDefault();
-    
-    // 1. Construct the email details
-    const adminEmail = "admire@ihmr.ai"; // Change to your preferred admin email
+    const adminEmail = "admire@ihmr.ai";
     const mailSubject = subject ? `Support Request: ${subject}` : "Support Request";
     const mailBody = `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`;
-
-    // 2. Open default mail client with pre-filled details
     window.location.href = `mailto:${adminEmail}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
-
-    // 3. Keep the visual UI feedback
     setSent(true);
     setName(''); setEmail(''); setSubject(''); setMessage('');
     setTimeout(() => setSent(false), 4000);
@@ -63,37 +60,21 @@ export default function HelpSupport() {
   const card = { background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:18, boxShadow:T.cardShadow };
   const inp  = { width:'100%', border:`1px solid ${T.inputBorder}`, background:T.inputBg, color:T.inputText, padding:'10px 12px', borderRadius:12, fontSize:13, outline:'none', boxSizing:'border-box' };
   const lbl  = { display:'block', fontSize:11, fontWeight:700, color:T.textMuted, textTransform:'uppercase', letterSpacing:1, marginBottom:6 };
+  
+  const pagePadding = isMobile ? '20px 16px' : isTablet ? '24px 20px' : '32px 40px';
 
   return (
-    <div style={{ padding:'32px 40px', background:T.pageBg, minHeight:'100%' }}>
+    <div style={{ padding: pagePadding, background:T.pageBg, minHeight:'100%' }}>
       <div style={{ marginBottom:24 }}>
         <h1 style={{ fontSize:22, fontWeight:700, color:T.textPrimary, marginBottom:4 }}>{t('help_title')}</h1>
         <p style={{ fontSize:13, color:T.textMuted }}>{t('help_sub')}</p>
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:24 }}>
+      <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap:14, marginBottom:24 }}>
         {[
-          { 
-            icon: FileText, 
-            label: t('help_docs'), 
-            sub: t('help_docs_sub'), 
-            color: '#2563eb',
-            action: () => window.open('/documentation.pdf', '_blank') // Ensure documentation.pdf is in your public folder
-          },
-          { 
-            icon: MessageCircle, 
-            label: t('help_chat'), 
-            sub: t('help_chat_sub'), 
-            color: '#0d9488',
-            action: () => window.open('https://wa.me/918884774504', '_blank') // Opens WhatsApp
-          },
-          { 
-            icon: Mail, 
-            label: t('help_email_card'), 
-            sub: 'admire@ihmr.ai', 
-            color: '#7c3aed',
-            action: () => window.location.href = 'mailto:admire@ihmr.ai' // Opens Mail client
-          },
+          { icon: FileText, label: t('help_docs'), sub: t('help_docs_sub'), color: '#2563eb', action: () => window.open('/documentation.pdf', '_blank') },
+          { icon: MessageCircle, label: t('help_chat'), sub: t('help_chat_sub'), color: '#0d9488', action: () => window.open('https://wa.me/918884774504', '_blank') },
+          { icon: Mail, label: t('help_email_card'), sub: 'admire@ihmr.ai', color: '#7c3aed', action: () => window.location.href = 'mailto:admire@ihmr.ai' },
         ].map(({ icon:Icon, label, sub, color, action }) => (
           <div key={label} onClick={action} style={{ ...card, padding:22, textAlign:'center', cursor:'pointer' }}>
             <Icon size={22} color={color} style={{ marginBottom:8 }}/>
@@ -103,7 +84,7 @@ export default function HelpSupport() {
         ))}
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 360px', gap:20 }}>
+      <div style={{ display:'grid', gridTemplateColumns: isMobile || isTablet ? '1fr' : '1fr 360px', gap:20 }}>
         <div style={{ ...card, overflow:'hidden' }}>
           <div style={{ padding:'20px 22px', borderBottom:`1px solid ${T.divider}` }}>
             <h2 style={{ fontSize:14, fontWeight:700, color:T.textPrimary, marginBottom:14 }}>{t('help_faq')}</h2>

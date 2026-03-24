@@ -33,12 +33,8 @@ export default function DashboardHome() {
 
   const card = { background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:18, boxShadow:T.cardShadow };
 
-  // Responsive padding
-  const pagePadding = isMobile ? '16px 14px' : isTablet ? '20px 18px' : '32px 40px';
-  // On mobile add top padding so hamburger doesn't overlap title
-  const pageTopPadding = (isMobile || isTablet) ? '70px 14px 16px' : '32px 40px';
-
-  // Stats grid columns
+  // Responsive padding relies on DashboardLayout handling the top margin now!
+  const pagePadding = isMobile ? '20px 16px' : isTablet ? '24px 20px' : '32px 40px';
   const statsColumns = isMobile ? '1fr 1fr' : isTablet ? '1fr 1fr' : 'repeat(4,1fr)';
 
   const stats = [
@@ -48,11 +44,8 @@ export default function DashboardHome() {
     { label:t('dash_avg_dice'),    value: scanData?.scans?.[0]?.leads_count ?? '—', sub:'Last scan leads', icon:TrendingUp, color:'#ea580c', bg:'#fff7ed' },
   ];
 
-  // Table columns — hide some on mobile
-  const showAllCols = !isMobile;
-
   return (
-    <div style={{ padding: pageTopPadding, background:T.pageBg, minHeight:'100%' }}>
+    <div style={{ padding: pagePadding, background:T.pageBg, minHeight:'100%' }}>
 
       {/* ── Header ── */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom: isMobile ? 16 : 28, flexWrap:'wrap', gap:10 }}>

@@ -152,20 +152,28 @@ export default function DashboardLayout() {
         />
       )}
 
-      {/* ── MOBILE: Hamburger button ── */}
+      {/* ── MOBILE: Top Solid Header Bar (Fixes scrolling overlap) ── */}
       {isMobileOrTablet && (
-        <button
-          onClick={() => setSidebarOpen(v => !v)}
-          style={{
-            position:'fixed', top:14, left:14, zIndex:60,
-            width:38, height:38, borderRadius:10,
-            background:T.cardBg, border:`1px solid ${T.cardBorder}`,
-            display:'flex', alignItems:'center', justifyContent:'center',
-            cursor:'pointer', boxShadow:'0 2px 10px rgba(0,0,0,0.12)',
-          }}
-        >
-          {sidebarOpen ? <CloseIcon size={18} color={T.textPrimary}/> : <Menu size={18} color={T.textPrimary}/>}
-        </button>
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, height: 60,
+          background: T.pageBg, borderBottom: `1px solid ${T.divider}`,
+          zIndex: 45, display: 'flex', alignItems: 'center', padding: '0 16px',
+        }}>
+          <button
+            onClick={() => setSidebarOpen(v => !v)}
+            style={{
+              width: 38, height: 38, borderRadius: 10,
+              background: T.cardBg, border: `1px solid ${T.cardBorder}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+            }}
+          >
+            {sidebarOpen ? <CloseIcon size={18} color={T.textPrimary}/> : <Menu size={18} color={T.textPrimary}/>}
+          </button>
+          <span style={{ marginLeft: 16, fontSize: 16, fontWeight: 700, color: T.textPrimary }}>
+            IHMR.AI Dashboard
+          </span>
+        </div>
       )}
 
       {/* ── SIDEBAR ── */}
@@ -179,7 +187,6 @@ export default function DashboardLayout() {
         padding: '20px 12px',
         justifyContent: 'space-between',
         overflowY: 'auto',
-        // Mobile: slide drawer
         ...(isMobileOrTablet ? {
           position: 'fixed',
           top: 0, left: 0,
@@ -202,8 +209,8 @@ export default function DashboardLayout() {
         overflowY: 'auto',
         background: T.pageBg,
         minWidth: 0,
-        // On mobile, no left offset needed — sidebar is fixed overlay
-        paddingTop: isMobileOrTablet ? 0 : 0,
+        // Push content down on mobile so it doesn't hide under the new top bar
+        paddingTop: isMobileOrTablet ? 60 : 0, 
       }}>
         <Outlet/>
       </main>
