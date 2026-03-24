@@ -24,6 +24,16 @@ export default function LoginSignup() {
     setErrorMessage('');
     setSuccessMessage('');
 
+    // --- NEW: Password Validation for Signup ---
+    if (!isLogin) {
+      const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+      if (!passwordRegex.test(password)) {
+        setErrorMessage('Password must be at least 8 characters, with 1 uppercase letter, 1 number, and 1 special character.');
+        setIsLoading(false);
+        return;
+      }
+    }
+
     const endpoint = isLogin ? '/api/login' : '/api/signup';
     const payload  = isLogin
       ? { email, password }
@@ -86,44 +96,45 @@ export default function LoginSignup() {
 
   const features = [
     { icon: Activity, text: 'AI-powered 12-lead ECG digitization' },
-    { icon: Shield,   text: 'Clinical-grade accuracy (SNR 21+ dB)' },
+    { icon: Shield,   text: 'Clinical-grade accuracy' }, // Text Updated Here
     { icon: Heart,    text: 'nnUNet deep learning pipeline' },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
 
-      <div className="bg-white rounded-3xl shadow-xl border border-blue-100 flex w-full max-w-5xl overflow-hidden min-h-[600px]">
+      {/* Changed flex layout here to support stacking on mobile (flex-col md:flex-row) */}
+      <div className="bg-white rounded-3xl shadow-xl border border-blue-100 flex flex-col md:flex-row w-full max-w-5xl overflow-hidden md:min-h-[600px]">
 
-        {/* ── LEFT — Blue brand panel ── */}
-        <div className="hidden md:flex md:w-5/12 bg-gradient-to-br from-blue-600 to-blue-700 flex-col justify-between p-10 relative overflow-hidden">
+        {/* ── LEFT — Blue brand panel (Now visible on mobile too) ── */}
+        <div className="flex w-full md:w-5/12 bg-gradient-to-br from-blue-600 to-blue-700 flex-col justify-center md:justify-between p-8 md:p-10 relative overflow-hidden shrink-0">
           {/* Background circles */}
           <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-blue-500/30"/>
           <div className="absolute -bottom-20 -left-10 w-72 h-72 rounded-full bg-blue-800/30"/>
           <div className="absolute top-1/2 right-0 w-32 h-32 rounded-full bg-blue-400/20"/>
 
           {/* Top — Logo */}
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-10">
+          <div className="relative z-10 mb-6 md:mb-0">
+            <div className="flex items-center gap-3 mb-6 md:mb-10">
               <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                 <Heart size={20} className="text-white"/>
               </div>
               <div>
                 <div className="text-white font-bold text-base leading-tight">ECG Digitizer</div>
-                <div className="text-blue-200 text-xs">Powered by IHMR.AI</div>
+                <div className="text-blue-200 text-xs">Powered by IIHMR.AI</div>
               </div>
             </div>
 
-            <h2 className="text-white font-bold text-2xl leading-snug mb-3">
+            <h2 className="text-white font-bold text-xl md:text-2xl leading-snug mb-2 md:mb-3">
               Clinical-grade ECG<br/>digitization with AI
             </h2>
-            <p className="text-blue-100 text-sm leading-relaxed">
+            <p className="text-blue-100 text-xs md:text-sm leading-relaxed">
               Transform paper ECG records into structured digital signals ready for analysis in seconds.
             </p>
           </div>
 
           {/* Middle — Features */}
-          <div className="relative z-10 space-y-4">
+          <div className="relative z-10 space-y-3 md:space-y-4 mt-6 md:mt-0">
             {features.map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
@@ -133,22 +144,10 @@ export default function LoginSignup() {
               </div>
             ))}
           </div>
-
-          {/* Bottom — Stats */}
-          
-        
         </div>
 
         {/* ── RIGHT — Form panel ── */}
         <div className="w-full md:w-7/12 flex flex-col justify-center p-8 md:p-12">
-
-          {/* Mobile logo */}
-          <div className="flex items-center gap-2 mb-8 md:hidden">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <Heart size={16} className="text-white"/>
-            </div>
-            <span className="font-bold text-gray-900">ECG Digitizer</span>
-          </div>
 
           {/* Heading */}
           <div className="mb-8">
@@ -229,6 +228,12 @@ export default function LoginSignup() {
                     {showPassword ? <EyeOff size={15}/> : <Eye size={15}/>}
                   </button>
                 </div>
+                {/* Form hint for new users regarding password strength */}
+                {!isLogin && (
+                   <p className="text-[10px] text-gray-400 mt-1.5">
+                     Min. 8 characters, 1 uppercase, 1 number, 1 special character.
+                   </p>
+                )}
               </div>
 
               <button type="submit" disabled={isLoading}
@@ -286,9 +291,9 @@ export default function LoginSignup() {
 
           <p className="text-center text-xs text-gray-400 mt-6">
             By continuing, you agree to our{' '}
-            <span className="text-blue-600 cursor-pointer hover:underline">Terms of Service</span>
+            <button type="button" onClick={() => alert('Terms of Service will be available soon.')} className="text-blue-600 cursor-pointer hover:underline">Terms of Service</button>
             {' '}and{' '}
-            <span className="text-blue-600 cursor-pointer hover:underline">Privacy Policy</span>
+            <button type="button" onClick={() => alert('Privacy Policy will be available soon.')} className="text-blue-600 cursor-pointer hover:underline">Privacy Policy</button>
           </p>
         </div>
       </div>
