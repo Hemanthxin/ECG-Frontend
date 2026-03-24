@@ -14,8 +14,8 @@ const LEADERSHIP = [
 const TEAM = [
   { id:'rk', name:'MR. VINAY R SRIHARI',  role:'Assistant Professor, IIHMR Bangalore', src:'/assets/Screenshot 2026-03-24 160050.png',                              bio:'Expert in health management research and AI-driven medical solutions.', tags:['Health Management','Research','AI'] },
   { id:'ar', name:'MS. GNANASIRI',        role:'Data Scientist, IIHMR Bangalore', src:'/assets/WhatsApp Image 2026-03-24 at 3.48.08 PM.jpeg',   bio:'Built the nnUNet-Based ECG digitization pipeline.', tags:['nnUNet','Research','Healthcare AI'] },
-  { id:'hr', name:'MS. AKILA',    role:'Data scientist, IIHMR Bangalore', src:'/assets/Akila.png',        bio:'Built the nnUNet-Based ECG digitization pipeline.',    tags:['PyTorch','YOLO','Signal Processing'] },
-  { id:'ps', name:'MR. HEMANTH B',        role:'AIML Engineer, IIHMR Bangalore', src:'/assets/1000136526.jpg',                          bio:'Built the YOLO-based ECG digitization pipeline.', tags:['ECG Digitization','YOLO','Signal Processing'] },
+  { id:'hr', name:'MS. AKILA',    role:'Data Scientist, IIHMR Bangalore', src:'/assets/Akila.png',        bio:'Built the nnUNet-Based ECG digitization pipeline.',    tags:['PyTorch','YOLO','Signal Processing'] },
+  { id:'ps', name:'MR. HEMANTH B',        role:'Data Scientist, IIHMR Bangalore', src:'/assets/1000136526.jpg',                          bio:'Built the YOLO-based ECG digitization pipeline.', tags:['ECG Digitization','YOLO','Signal Processing'] },
 ];
 
 const PAPERS = [

@@ -168,10 +168,8 @@ export default function Profile() {
   const handleDeleted=()=>{setUser(null);localStorage.removeItem('user');localStorage.removeItem('token');try{localStorage.removeItem(picKey);}catch{}navigate('/',{replace:true});};
 
   const initials=((user?.firstName?.[0]||'')+(user?.lastName?.[0]||''))||user?.name?.[0]||'U';
-
   const isMobileOrTablet = isMobile || isTablet;
 
-  // Only change: responsive top padding so content clears the mobile header bar
   const pagePad = isMobile
     ? '16px 14px 20px'
     : isTablet
@@ -191,11 +189,11 @@ export default function Profile() {
 
         {/* Header */}
         <div style={{ marginBottom:'clamp(16px, 3vw, 24px)' }}>
-          <h1 style={{ fontSize:'clamp(18px, 4vw, 22px)', fontWeight:700, color:T.textPrimary, marginBottom:4 }}>{t('profile_title')}</h1>
-          <p style={{ fontSize:13, color:T.textMuted }}>{t('profile_sub')}</p>
+          <h1 style={{ fontSize:'clamp(18px, 4vw, 22px)', fontWeight:700, color:T.textPrimary, marginBottom:4 }}>{t('profile_title') || 'My Profile'}</h1>
+          <p style={{ fontSize:13, color:T.textMuted }}>{t('profile_sub') || 'View and manage your personal information'}</p>
         </div>
 
-        {/* Fluid layout — wraps automatically on narrow screens */}
+        {/* Fluid layout — wraps automatically gracefully on standard desktop bounds */}
         <div style={{ display:'flex', flexWrap:'wrap', gap:'clamp(14px, 3vw, 20px)', width:'100%', alignItems:'flex-start' }}>
 
           {/* ── Avatar card ── */}
@@ -230,7 +228,7 @@ export default function Profile() {
             {/* Stats */}
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(100px, 1fr))', gap:10, textAlign:'left' }}>
               {[
-                { label:t('profile_total'), value:statsLoading?'…':String(stats.total_scans) },
+                { label:t('profile_total')||'TOTAL SCANS', value:statsLoading?'…':String(stats.total_scans) },
                 { label:'LEADS',            value:statsLoading?'…':String(stats.avg_leads) },
               ].map(s=>(
                 <div key={s.label} style={{ background:`${T.accent}10`, border:`1px solid ${T.accent}22`, borderRadius:12, padding:'12px 14px' }}>
@@ -251,11 +249,11 @@ export default function Profile() {
             <div style={{ ...card, padding:'clamp(18px, 4vw, 26px)' }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20, flexWrap:'wrap', gap:10 }}>
                 <div>
-                  <h2 style={{ fontSize:15, fontWeight:700, color:T.textPrimary }}>{t('profile_info')}</h2>
-                  <p style={{ fontSize:12, color:T.textMuted, marginTop:2 }}>{t('profile_info_sub')}</p>
+                  <h2 style={{ fontSize:15, fontWeight:700, color:T.textPrimary }}>{t('profile_info') || 'Personal Information'}</h2>
+                  <p style={{ fontSize:12, color:T.textMuted, marginTop:2 }}>{t('profile_info_sub') || 'Your basic profile details'}</p>
                 </div>
                 {!editing
-                  ?<button onClick={()=>setEditing(true)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33`, borderRadius:10, fontSize:12, fontWeight:600, cursor:'pointer' }}><Edit2 size={12}/> {t('profile_edit')}</button>
+                  ?<button onClick={()=>setEditing(true)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33`, borderRadius:10, fontSize:12, fontWeight:600, cursor:'pointer' }}><Edit2 size={12}/> {t('profile_edit') || 'Edit Profile'}</button>
                   :<div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
                     <button onClick={()=>{setEditing(false);setError('');}} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'8px 12px', background:T.cardBg, color:T.textSecondary, border:`1px solid ${T.cardBorder}`, borderRadius:10, fontSize:12, fontWeight:600, cursor:'pointer', flex:'1 1 auto' }}><X size={12}/> {t('profile_cancel')}</button>
                     <button onClick={handleSave} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'8px 14px', background:T.accent, color:T.accentText, border:'none', borderRadius:10, fontSize:12, fontWeight:700, cursor:'pointer', flex:'1 1 auto' }}><Save size={12}/> {t('profile_save')}</button>
@@ -265,24 +263,25 @@ export default function Profile() {
               {saved&&<div style={{ padding:'10px 14px', background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:10, fontSize:13, color:'#15803d', display:'flex', alignItems:'center', gap:8, marginBottom:16 }}><Check size={14}/> {t('profile_updated')}</div>}
               {error&&<div style={{ padding:'10px 14px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:10, fontSize:13, color:'#dc2626', marginBottom:16 }}>⚠ {error}</div>}
 
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:16 }}>
+              {/* Grid fixed for desktop: strictly capped at 3 columns so it doesn't stretch infinitely */}
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap:16 }}>
                 {[
-                  {name:'full_name', label:t('profile_fullname'), icon:User,     type:'text',   span:false},
-                  {name:'email',     label:t('profile_email'),    icon:Mail,     type:'email',  span:false, readOnly:true},
-                  {name:'age',       label:t('profile_age'),      icon:Calendar, type:'number', span:false},
-                  {name:'gender',    label:t('profile_gender'),   icon:Venus,    type:'select', span:false},
-                  {name:'phone',     label:t('profile_phone'),    icon:Phone,    type:'tel',    span:true},
+                  {name:'full_name', label:t('profile_fullname')||'FULL NAME', icon:User,     type:'text',   span:false},
+                  {name:'email',     label:t('profile_email')||'EMAIL ADDRESS',    icon:Mail,     type:'email',  span:false, readOnly:true},
+                  {name:'age',       label:t('profile_age')||'AGE',      icon:Calendar, type:'number', span:false},
+                  {name:'gender',    label:t('profile_gender')||'GENDER',   icon:Venus,    type:'select', span:false},
+                  {name:'phone',     label:t('profile_phone')||'PHONE',    icon:Phone,    type:'tel',    span:true},
                 ].map(({name,label,icon:Icon,type,span,readOnly})=>(
                   <div key={name} style={{ gridColumn: span ? '1 / -1' : 'auto' }}>
                     <label style={{ ...lbl, display:'flex', alignItems:'center', gap:4 }}><Icon size={10}/> {label}</label>
                     {readOnly?(
                       <div style={{ ...readFld, justifyContent:'space-between' }}>
                         <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:13 }}>{user?.email||'—'}</span>
-                        <span style={{ fontSize:10, background:T.cardBorder, color:T.textMuted, padding:'1px 7px', borderRadius:4, fontWeight:500, marginLeft:8, flexShrink:0 }}>{t('profile_readonly')}</span>
+                        <span style={{ fontSize:10, background:T.cardBorder, color:T.textMuted, padding:'1px 7px', borderRadius:4, fontWeight:500, marginLeft:8, flexShrink:0 }}>{t('profile_readonly') || 'Read only'}</span>
                       </div>
                     ):editing?(
                       type==='select'
-                        ?<select name={name} value={form[name]} onChange={handleChange} style={{ ...inp, padding:'10px 12px' }}><option value="">{t('select_gender')}</option><option>Male</option><option>Female</option><option>Other</option></select>
+                        ?<select name={name} value={form[name]} onChange={handleChange} style={{ ...inp, padding:'10px 12px' }}><option value="">{t('select_gender')||'Select'}</option><option>Male</option><option>Female</option><option>Other</option></select>
                         :<input name={name} type={type} value={form[name]} onChange={handleChange} style={inp}/>
                     ):(
                       <div style={readFld}>{name==='age'&&user?.age?`${user.age} Years`:user?.[name==='full_name'?'name':name]||'—'}</div>
@@ -294,29 +293,41 @@ export default function Profile() {
 
             {/* Account */}
             <div style={{ ...card, padding:'clamp(18px, 4vw, 26px)' }}>
-              <h2 style={{ fontSize:15, fontWeight:700, color:T.textPrimary, marginBottom:16 }}>{t('profile_account')}</h2>
+              <h2 style={{ fontSize:15, fontWeight:700, color:T.textPrimary, marginBottom:16 }}>{t('profile_account') || 'Account'}</h2>
 
-              <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', paddingBottom:16, borderBottom:`1px solid ${T.divider}`, gap:16 }}>
+              {/* Change Password Card - Redesigned to match image exactly */}
+              <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', padding:16, border:`1px solid ${T.cardBorder}`, borderRadius:12, gap:16, marginBottom:16 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:12, flex:'1 1 200px' }}>
-                  <div style={{ width:36, height:36, borderRadius:11, background:`${T.accent}14`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><Lock size={16} color={T.accent}/></div>
-                  <div><div style={{ fontSize:13, fontWeight:600, color:T.textPrimary }}>{t('profile_chg_pwd')}</div><div style={{ fontSize:11, color:T.textMuted }}>{t('profile_chg_sub')}</div></div>
+                  <div style={{ width:40, height:40, borderRadius:10, background:`${T.accent}14`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <Lock size={18} color={T.accent}/>
+                  </div>
+                  <div>
+                    <div style={{ fontSize:14, fontWeight:600, color:T.textPrimary }}>{t('profile_chg_pwd') || 'Change Password'}</div>
+                    <div style={{ fontSize:12, color:T.textMuted }}>{t('profile_chg_sub') || 'Update your login password'}</div>
+                  </div>
                 </div>
-                <button onClick={()=>setShowPwd(true)} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'8px 14px', background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33`, borderRadius:10, fontSize:12, fontWeight:600, cursor:'pointer', flex: isMobileOrTablet ? '1 1 100%' : '0 1 auto' }}>
-                  <Lock size={12}/> {t('profile_update')}
+                <button onClick={()=>setShowPwd(true)} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'8px 16px', background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33`, borderRadius:10, fontSize:13, fontWeight:600, cursor:'pointer', flex: isMobileOrTablet ? '1 1 100%' : '0 1 auto' }}>
+                  <Lock size={14}/> {t('profile_update') || 'Update'}
                 </button>
               </div>
 
-              <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', paddingTop:16, gap:16 }}>
+              {/* Delete Account Card - Redesigned to match image exactly */}
+              <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', padding:16, border:`1px solid ${T.cardBorder}`, borderRadius:12, gap:16 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:12, flex:'1 1 200px' }}>
-                  <div style={{ width:36, height:36, borderRadius:11, background:'#fef2f2', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><Trash2 size={16} color="#ef4444"/></div>
-                  <div><div style={{ fontSize:13, fontWeight:600, color:'#ef4444' }}>{t('profile_del_acct')}</div><div style={{ fontSize:11, color:T.textMuted }}>{t('profile_del_sub')}</div></div>
+                  <div style={{ width:40, height:40, borderRadius:10, background:'#fef2f2', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <Trash2 size={18} color="#ef4444"/>
+                  </div>
+                  <div>
+                    <div style={{ fontSize:14, fontWeight:600, color:'#ef4444' }}>{t('profile_del_acct') || 'Delete Account'}</div>
+                    <div style={{ fontSize:12, color:T.textMuted }}>{t('profile_del_sub') || 'Permanently remove your account and all data'}</div>
+                  </div>
                 </div>
-                <button onClick={()=>setShowDel(true)} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'8px 14px', background:'#fef2f2', color:'#ef4444', border:'1px solid #fecaca', borderRadius:10, fontSize:12, fontWeight:600, cursor:'pointer', flex: isMobileOrTablet ? '1 1 100%' : '0 1 auto' }}>
-                  <Trash2 size={12}/> {t('profile_delete')}
+                <button onClick={()=>setShowDel(true)} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'8px 16px', background:'#fef2f2', color:'#ef4444', border:'1px solid #fecaca', borderRadius:10, fontSize:13, fontWeight:600, cursor:'pointer', flex: isMobileOrTablet ? '1 1 100%' : '0 1 auto' }}>
+                  <Trash2 size={14}/> {t('profile_delete') || 'Delete'}
                 </button>
               </div>
+
             </div>
-
           </div>
         </div>
       </div>
