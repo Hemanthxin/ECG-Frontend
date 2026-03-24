@@ -6,6 +6,9 @@ import { useTheme }      from '../pages/Themecontext';
 import { useLanguage }   from '../context/LanguageContext';
 import { useResponsive } from '../hooks/useresponsive';
 
+// Note: If you prefer to import the image, you can do so here:
+// import Logo from '../assets/cropped-cropped-IIHMR-Logo-03.png';
+
 export default function DashboardLayout() {
   const location  = useLocation();
   const navigate  = useNavigate();
@@ -170,10 +173,13 @@ export default function DashboardLayout() {
           >
             {sidebarOpen ? <CloseIcon size={18} color={T.textPrimary}/> : <Menu size={18} color={T.textPrimary}/>}
           </button>
-          {/* Changed header text here */}
-          <span style={{ marginLeft: 16, fontSize: 16, fontWeight: 700, color: T.textPrimary }}>
-            IIHMR.AI
-          </span>
+          
+          {/* Replaced text with the logo image */}
+          <img 
+            src="/cropped-cropped-IIHMR-Logo-03.png" 
+            alt="IIHMR Logo" 
+            style={{ marginLeft: 16, height: 32, width: 'auto', objectFit: 'contain' }} 
+          />
         </div>
       )}
 
