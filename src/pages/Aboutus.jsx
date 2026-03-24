@@ -4,11 +4,11 @@ import { useTheme }    from '../pages/Themecontext';
 import { useLanguage } from '../context/LanguageContext';
 import { useResponsive } from '../hooks/useresponsive';
 
-// ── Changed paths to absolute public paths (/assets/...) for Vercel ──
-// IMPORTANT: Move your 'assets' folder from 'src/assets' to 'public/assets'
+// ── VERCEL FIX: Ensure your 'assets' folder is inside the 'public' folder! ──
+// Example: public/assets/image.png
 const LEADERSHIP = [
-  { id:'director', name:'DR. USHA MANJUNATH',  role:'Professor & Director, IIHMR Bangalore',             src:'/assets/Screenshot 2026-03-19 220050.png', bio:'Professor with 25+ years of experience. Leads the IIHMR institute and its AI healthcare initiatives.', email:'director@ihmr.ai', tags:['Healthcare Management','AI Research','Leadership'] },
-  { id:'admire',   name:'DR. AKASH PRABHUNE',  role:'Assistant Professor & Lead ADMIRE, IIHMR Bangalore',  src:'/assets/Screenshot 2026-03-19 221444.png', bio:'Lead of AI-driven Medical Research (ADMIRE) program. Spearheads cross-disciplinary projects combining cardiology, data science, and clinical outcomes.', email:'admire@ihmr.ai', tags:['ADMIRE Lead','Clinical AI','Dentist'] },
+  { id:'director', name:'DR. USHA MANJUNATH',  role:'Professor & Director, IIHMR Bangalore',             src:'/assets/Screenshot%202026-03-19%20220050.png', bio:'Professor with 25+ years of experience. Leads the IIHMR institute and its AI healthcare initiatives.', email:'director@ihmr.ai', tags:['Healthcare Management','AI Research','Leadership'] },
+  { id:'admire',   name:'DR. AKASH PRABHUNE',  role:'Assistant Professor & Lead ADMIRE, IIHMR Bangalore',  src:'/assets/Screenshot%202026-03-19%20221444.png', bio:'Lead of AI-driven Medical Research (ADMIRE) program. Spearheads cross-disciplinary projects combining cardiology, data science, and clinical outcomes.', email:'admire@ihmr.ai', tags:['ADMIRE Lead','Clinical AI','Dentist'] },
 ];
 
 const TEAM = [
@@ -55,7 +55,8 @@ function PaperModal({ paper, T, onClose, t }) {
 function PersonPhoto({ src, name, size, radius }) {
   return (
     <div style={{ width:size, height:size, borderRadius:radius, overflow:'hidden', flexShrink:0, border:'4px solid rgba(37,99,235,0.2)', boxShadow:'0 6px 24px rgba(0,0,0,0.14)' }}>
-      <img src={src} alt={name} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+      {/* Vercel fallback: if the image path fails to load, it will show an empty block instead of a broken icon */}
+      <img src={src} alt={name} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.parentNode.style.background = '#e2e8f0'; }} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
     </div>
   );
 }
@@ -136,7 +137,8 @@ export default function AboutUs() {
         <div style={{ display:'grid', gridTemplateColumns: isMobile || isTablet ? '1fr' : '1fr 1fr', gap:18 }}>
           {LEADERSHIP.map(person=>(
             <div key={person.id} style={{ ...card, padding:24, display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:22, alignItems: isMobile ? 'center' : 'flex-start', textAlign: isMobile ? 'center' : 'left' }}>
-              <PersonPhoto src={person.src} name={person.name} size={isMobile ? 120 : 160} radius={20}/>
+              {/* INCREASED SIZE HERE: Desktop=220px, Mobile=160px */}
+              <PersonPhoto src={person.src} name={person.name} size={isMobile ? 160 : 220} radius={20}/>
               <div style={{ flex:1, minWidth:0 }}>
                 <h3 style={{ fontSize:16, fontWeight:700, color:T.textPrimary, marginBottom:3 }}>{person.name}</h3>
                 <div style={{ display:'inline-block', fontSize:11, fontWeight:700, color:T.accentText, background:T.accent, padding:'2px 10px', borderRadius:20, marginBottom:10 }}>{person.role}</div>
@@ -157,14 +159,15 @@ export default function AboutUs() {
           <h2 style={{ fontSize:14, fontWeight:700, color:T.textPrimary }}>{t('about_team')}</h2>
           <div style={{ flex:1, height:1, background:T.divider }}/>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4,1fr)', gap:16 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4,1fr)', gap:16 }}>
           {TEAM.map(member=>(
             <div key={member.id} style={{ ...card, padding:22, display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center' }}>
-              <PersonPhoto src={member.src} name={member.name} size={isMobile ? 100 : 180} radius={16}/>
+              {/* INCREASED SIZE HERE: Desktop=240px, Mobile=180px */}
+              <PersonPhoto src={member.src} name={member.name} size={isMobile ? 180 : 240} radius={16}/>
               <div style={{ marginTop:16, width:'100%' }}>
                 <div style={{ fontSize:14, fontWeight:700, color:T.textPrimary, marginBottom:3 }}>{member.name}</div>
                 <div style={{ fontSize:11, fontWeight:700, color:T.accent, marginBottom:10 }}>{member.role}</div>
-                <p style={{ fontSize:12, color:T.textMuted, lineHeight:1.65, marginBottom:14, textAlign: isMobile ? 'center' : 'left' }}>{member.bio}</p>
+                <p style={{ fontSize:12, color:T.textMuted, lineHeight:1.65, marginBottom:14, textAlign: 'center' }}>{member.bio}</p>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:5, justifyContent:'center' }}>
                   {member.tags.map(tag=><span key={tag} style={{ fontSize:10, fontWeight:500, padding:'3px 9px', borderRadius:20, background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33` }}>{tag}</span>)}
                 </div>

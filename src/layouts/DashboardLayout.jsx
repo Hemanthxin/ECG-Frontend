@@ -170,8 +170,9 @@ export default function DashboardLayout() {
           >
             {sidebarOpen ? <CloseIcon size={18} color={T.textPrimary}/> : <Menu size={18} color={T.textPrimary}/>}
           </button>
+          {/* Changed header text here */}
           <span style={{ marginLeft: 16, fontSize: 16, fontWeight: 700, color: T.textPrimary }}>
-            IHMR.AI Dashboard
+            IIHMR.AI
           </span>
         </div>
       )}

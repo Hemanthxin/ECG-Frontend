@@ -39,7 +39,7 @@ export default function DashboardHome() {
 
   const stats = [
     { label:t('dash_total_scans'), value: scanData?.total_scans ?? '—', sub:'All time',          icon:Activity,   color:'#2563eb', bg:'#eff6ff' },
-    { label:t('dash_avg_leads'),   value: scanData?.avg_leads   ?? '—', sub:'Per scan',          icon:BarChart2,  color:'#0d9488', bg:'#f0fdf4' },
+    { label:'Leads',               value: scanData?.avg_leads   ?? '—', sub:'Per scan',          icon:BarChart2,  color:'#0d9488', bg:'#f0fdf4' },
     { label:t('dash_avg_time'),    value: scanData?.avg_duration?? '—', sub:'Per ECG scan',      icon:Clock,      color:'#7c3aed', bg:'#f5f3ff' },
     { label:t('dash_avg_dice'),    value: scanData?.scans?.[0]?.leads_count ?? '—', sub:'Last scan leads', icon:TrendingUp, color:'#ea580c', bg:'#fff7ed' },
   ];
@@ -134,10 +134,6 @@ export default function DashboardHome() {
                     <div style={{ fontSize:12, fontWeight:700, color:T.textPrimary, marginTop:2 }}>{scan.leads_count}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize:9, color:T.textMuted, fontWeight:700, textTransform:'uppercase', letterSpacing:0.5 }}>{t('dash_leads_det')}</div>
-                    <div style={{ fontSize:12, fontWeight:700, color:T.accent, marginTop:2, fontFamily:'monospace' }}>{scan.leads_count}</div>
-                  </div>
-                  <div>
                     <div style={{ fontSize:9, color:T.textMuted, fontWeight:700, textTransform:'uppercase', letterSpacing:0.5 }}>{t('dash_duration')}</div>
                     <div style={{ fontSize:11, color:T.textSecondary, marginTop:2 }}>{scan.duration}</div>
                   </div>
@@ -151,7 +147,7 @@ export default function DashboardHome() {
             <table style={{ width:'100%', borderCollapse:'collapse', minWidth: isTablet ? 500 : 600 }}>
               <thead>
                 <tr style={{ background:T.tableHdr }}>
-                  {[t('dash_record_id'), t('dash_date'), t('dash_leads'), t('dash_leads_det'), t('dash_duration'), t('dash_status')].map(h => (
+                  {[t('dash_record_id'), t('dash_date'), t('dash_leads'), t('dash_duration'), t('dash_status')].map(h => (
                     <th key={h} style={{ padding: isTablet ? '10px 14px' : '10px 24px', textAlign:'left', fontSize:10, fontWeight:700, color:T.textMuted, textTransform:'uppercase', letterSpacing:0.8, whiteSpace:'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -166,7 +162,6 @@ export default function DashboardHome() {
                     <td style={{ padding: isTablet ? '11px 14px' : '13px 24px', fontFamily:'monospace', fontSize:11, fontWeight:700, color:T.textPrimary }}>{scan.record_id}</td>
                     <td style={{ padding: isTablet ? '11px 14px' : '13px 24px', fontSize:11, color:T.textMuted, whiteSpace:'nowrap' }}>{scan.created_at}</td>
                     <td style={{ padding: isTablet ? '11px 14px' : '13px 24px', fontSize:12, fontWeight:600, color:T.textPrimary }}>{scan.leads_count}</td>
-                    <td style={{ padding: isTablet ? '11px 14px' : '13px 24px', fontSize:12, fontWeight:700, fontFamily:'monospace', color:T.accent }}>{scan.leads_count}</td>
                     <td style={{ padding: isTablet ? '11px 14px' : '13px 24px', fontSize:11, color:T.textMuted }}>{scan.duration}</td>
                     <td style={{ padding: isTablet ? '11px 14px' : '13px 24px' }}>
                       <span style={{ display:'inline-flex', alignItems:'center', gap:5, background:T.badgeBg, color:T.badgeTxt, border:`1px solid ${T.badgeBorder}`, fontSize:10, fontWeight:600, padding:'3px 9px', borderRadius:20, whiteSpace:'nowrap' }}>
