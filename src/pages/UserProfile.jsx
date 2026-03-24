@@ -263,8 +263,8 @@ export default function Profile() {
               {saved&&<div style={{ padding:'10px 14px', background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:10, fontSize:13, color:'#15803d', display:'flex', alignItems:'center', gap:8, marginBottom:16 }}><Check size={14}/> {t('profile_updated')}</div>}
               {error&&<div style={{ padding:'10px 14px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:10, fontSize:13, color:'#dc2626', marginBottom:16 }}>⚠ {error}</div>}
 
-              {/* Grid fixed for desktop: strictly capped at 3 columns so it doesn't stretch infinitely */}
-              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap:16 }}>
+              {/* Grid fixed for desktop: perfectly aligns items without leaving random gaps */}
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap:16 }}>
                 {[
                   {name:'full_name', label:t('profile_fullname')||'FULL NAME', icon:User,     type:'text',   span:false},
                   {name:'email',     label:t('profile_email')||'EMAIL ADDRESS',    icon:Mail,     type:'email',  span:false, readOnly:true},
