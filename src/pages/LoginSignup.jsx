@@ -144,7 +144,7 @@ export default function LoginSignup() {
 
   return (
     // Replace YOUR_GOOGLE_CLIENT_ID with your actual Google Client ID
-    <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+    <GoogleOAuthProvider clientId="GOOGLE_CLIENT_ID">
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
 
         <div className="bg-white rounded-3xl shadow-xl border border-blue-100 flex flex-col md:flex-row w-full max-w-5xl overflow-hidden md:min-h-[600px]">
