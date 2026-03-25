@@ -170,170 +170,246 @@ export default function Profile() {
   const initials=((user?.firstName?.[0]||'')+(user?.lastName?.[0]||''))||user?.name?.[0]||'U';
   const isMobileOrTablet = isMobile || isTablet;
 
-  const pagePad = isMobile
-    ? '16px 14px 20px'
-    : isTablet
-      ? '20px 18px 20px'
-      : 'clamp(10px, 2vw, 24px) clamp(14px, 4vw, 32px)';
+  const card = {
+    background: T.cardBg,
+    border: `1px solid ${T.cardBorder}`,
+    borderRadius: 16,
+    boxShadow: T.cardShadow,
+  };
 
-  const card = { background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:18, boxShadow:T.cardShadow, height:'fit-content' };
-  const inp  = { width:'100%', border:`1px solid ${T.inputBorder}`, background:T.inputBg, color:T.inputText, padding:'10px 12px', borderRadius:12, fontSize:13, outline:'none', boxSizing:'border-box' };
-  const lbl  = { display:'block', fontSize:11, fontWeight:700, color:T.textMuted, textTransform:'uppercase', letterSpacing:1, marginBottom:6 };
-  const readFld = { display:'flex', alignItems:'center', padding:'10px 12px', borderRadius:12, border:`1px solid ${T.cardBorder}`, background:T.inputBg, fontSize:13, fontWeight:500, color:T.textSecondary };
+  const inp = {
+    width: '100%',
+    border: `1px solid ${T.inputBorder}`,
+    background: T.inputBg,
+    color: T.inputText,
+    padding: '9px 12px',
+    borderRadius: 10,
+    fontSize: 13,
+    outline: 'none',
+    boxSizing: 'border-box',
+  };
 
-  return(
-    <div style={{ padding:pagePad, background:T.pageBg, minHeight:'100%', boxSizing:'border-box' }}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes shimmer{0%,100%{opacity:.4}50%{opacity:.8}}`}</style>
+  const lbl = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    fontSize: 10,
+    fontWeight: 700,
+    color: T.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 5,
+  };
 
-      <div style={{ maxWidth:1100, margin:'0 auto', width:'100%' }}>
+  const readFld = {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '9px 12px',
+    borderRadius: 10,
+    border: `1px solid ${T.cardBorder}`,
+    background: T.inputBg,
+    fontSize: 13,
+    fontWeight: 500,
+    color: T.textSecondary,
+    minHeight: 38,
+  };
 
-        {/* Header */}
-        <div style={{ marginBottom:'clamp(16px, 3vw, 24px)' }}>
-          <h1 style={{ fontSize:'clamp(18px, 4vw, 22px)', fontWeight:700, color:T.textPrimary, marginBottom:4 }}>{t('profile_title') || 'My Profile'}</h1>
-          <p style={{ fontSize:13, color:T.textMuted }}>{t('profile_sub') || 'View and manage your personal information'}</p>
+  return (
+    <div style={{
+      padding: isMobile ? '14px 12px' : isTablet ? '16px 16px' : '20px 24px',
+      background: T.pageBg,
+      minHeight: '100%',
+      boxSizing: 'border-box',
+    }}>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        @keyframes shimmer { 0%,100%{opacity:.4}50%{opacity:.8} }
+      `}</style>
+
+      {/* Page Header */}
+      <div style={{ marginBottom: 16 }}>
+        <h1 style={{ fontSize: 18, fontWeight: 700, color: T.textPrimary, margin: 0 }}>
+          {t('profile_title') || 'My Profile'}
+        </h1>
+        <p style={{ fontSize: 12, color: T.textMuted, margin: '3px 0 0' }}>
+          {t('profile_sub') || 'View and manage your personal information'}
+        </p>
+      </div>
+
+      {/* Main Layout */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobileOrTablet ? '1fr' : '260px 1fr',
+        gap: 16,
+        alignItems: 'start',
+        width: '100%',
+      }}>
+
+        {/* ── Left: Avatar Card ── */}
+        <div style={{ ...card, padding: '20px 16px' }}>
+
+          {/* Avatar */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 16 }}>
+            <div style={{ position: 'relative', marginBottom: 10 }}>
+              {profilePic
+                ? <img src={profilePic} alt="Profile" style={{ width: 80, height: 80, borderRadius: 20, objectFit: 'cover', border: `3px solid ${T.accent}`, display: 'block' }}/>
+                : <div style={{ width: 80, height: 80, borderRadius: 20, background: T.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 16px ${T.accent}44` }}>
+                    <span style={{ color: T.accentText, fontSize: 26, fontWeight: 700 }}>{initials.toUpperCase()}</span>
+                  </div>
+              }
+              <button onClick={() => picInputRef.current?.click()} title="Upload photo" style={{ position: 'absolute', bottom: -5, right: -5, width: 28, height: 28, borderRadius: 8, background: T.accent, border: `2px solid ${T.cardBg}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <Camera size={12} color={T.accentText}/>
+              </button>
+              <input ref={picInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePicChange}/>
+            </div>
+
+            <h2 style={{ fontSize: 15, fontWeight: 700, color: T.textPrimary, margin: '0 0 2px', textAlign: 'center' }}>{user?.name || 'User'}</h2>
+            <p style={{ fontSize: 11, color: T.textMuted, margin: 0, wordBreak: 'break-all', textAlign: 'center' }}>{user?.email}</p>
+          </div>
+
+          {/* Photo buttons */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+            <button onClick={() => picInputRef.current?.click()} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '7px 10px', borderRadius: 9, border: `1px solid ${T.accent}`, background: `${T.accent}10`, color: T.accent, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+              <Upload size={10}/> {profilePic ? t('profile_change_photo') : t('profile_upload_photo')}
+            </button>
+            {profilePic && (
+              <button onClick={handleRemovePic} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '7px 10px', borderRadius: 9, border: '1px solid #fecaca', background: '#fef2f2', color: '#ef4444', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                <X size={10}/> {t('profile_remove')}
+              </button>
+            )}
+          </div>
+
+          {/* Profile complete badge */}
+          {user?.is_profile_complete && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: `${T.accent}12`, color: T.accent, border: `1px solid ${T.accent}30`, fontSize: 11, fontWeight: 600, padding: '4px 12px', borderRadius: 20 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent, display: 'inline-block' }}/> {t('profile_complete')}
+              </div>
+            </div>
+          )}
+
+          {/* Stats — horizontal on mobile, stacked on sidebar */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {[
+              { label: t('profile_total') || 'TOTAL SCANS', value: statsLoading ? '…' : String(stats.total_scans) },
+              { label: 'LEADS', value: statsLoading ? '…' : String(stats.avg_leads) },
+            ].map(s => (
+              <div key={s.label} style={{ background: `${T.accent}0e`, border: `1px solid ${T.accent}20`, borderRadius: 10, padding: '10px 12px' }}>
+                {statsLoading
+                  ? <div style={{ height: 18, background: T.cardBorder, borderRadius: 5, animation: 'shimmer 1.5s infinite', marginBottom: 4 }}/>
+                  : <div style={{ fontSize: 20, fontWeight: 700, color: T.accent, lineHeight: 1 }}>{s.value}</div>
+                }
+                <div style={{ fontSize: 9, color: T.textMuted, marginTop: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Fluid layout — wraps automatically gracefully on standard desktop bounds */}
-        <div style={{ display:'flex', flexWrap:'wrap', gap:'clamp(14px, 3vw, 20px)', width:'100%', alignItems:'flex-start' }}>
+        {/* ── Right: Details Column ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
 
-          {/* ── Avatar card ── */}
-          <div style={{ ...card, flex:'1 1 260px', minWidth:'240px', maxWidth: isMobileOrTablet ? '100%' : 300, padding:'clamp(20px, 4vw, 28px)', textAlign:'center' }}>
-            <div style={{ position:'relative', display:'inline-block', marginBottom:14 }}>
-              {profilePic
-                ?<img src={profilePic} alt="Profile" style={{ width:100, height:100, borderRadius:24, objectFit:'cover', border:`3px solid ${T.accent}`, boxShadow:`0 4px 20px ${T.accent}33`, display:'block' }}/>
-                :<div style={{ width:100, height:100, borderRadius:24, background:T.accent, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto', boxShadow:`0 4px 20px ${T.accent}44` }}><span style={{ color:T.accentText, fontSize:32, fontWeight:700 }}>{initials.toUpperCase()}</span></div>
+          {/* Personal Information Card */}
+          <div style={{ ...card, padding: '18px 20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 10, flexWrap: 'wrap' }}>
+              <div>
+                <h2 style={{ fontSize: 14, fontWeight: 700, color: T.textPrimary, margin: 0 }}>{t('profile_info') || 'Personal Information'}</h2>
+                <p style={{ fontSize: 11, color: T.textMuted, margin: '2px 0 0' }}>{t('profile_info_sub') || 'Your basic profile details'}</p>
+              </div>
+              {!editing
+                ? <button onClick={() => setEditing(true)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', background: `${T.accent}12`, color: T.accent, border: `1px solid ${T.accent}30`, borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <Edit2 size={11}/> {t('profile_edit') || 'Edit Profile'}
+                  </button>
+                : <div style={{ display: 'flex', gap: 7 }}>
+                    <button onClick={() => { setEditing(false); setError(''); }} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', background: T.cardBg, color: T.textSecondary, border: `1px solid ${T.cardBorder}`, borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><X size={11}/> {t('profile_cancel')}</button>
+                    <button onClick={handleSave} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', background: T.accent, color: T.accentText, border: 'none', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Save size={11}/> {t('profile_save')}</button>
+                  </div>
               }
-              <button onClick={()=>picInputRef.current?.click()} title="Upload photo" style={{ position:'absolute', bottom:-6, right:-6, width:34, height:34, borderRadius:10, background:T.accent, border:`2px solid ${T.cardBg}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.2)' }}>
-                <Camera size={15} color={T.accentText}/>
-              </button>
-              <input ref={picInputRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handlePicChange}/>
             </div>
 
-            <h2 style={{ fontSize:16, fontWeight:700, color:T.textPrimary, marginBottom:3 }}>{user?.name||'User'}</h2>
-            <p style={{ fontSize:12, color:T.textMuted, marginBottom:12, wordBreak:'break-all' }}>{user?.email}</p>
-
-            <div style={{ display:'flex', gap:8, justifyContent:'center', marginBottom:14, flexWrap:'wrap' }}>
-              <button onClick={()=>picInputRef.current?.click()} style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 14px', borderRadius:10, border:`1px solid ${T.accent}`, background:`${T.accent}12`, color:T.accent, fontSize:11, fontWeight:600, cursor:'pointer' }}>
-                <Upload size={11}/> {profilePic?t('profile_change_photo'):t('profile_upload_photo')}
-              </button>
-              {profilePic&&<button onClick={handleRemovePic} style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:10, border:'1px solid #fecaca', background:'#fef2f2', color:'#ef4444', fontSize:11, fontWeight:600, cursor:'pointer' }}><X size={11}/> {t('profile_remove')}</button>}
-            </div>
-
-            {user?.is_profile_complete&&(
-              <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33`, fontSize:11, fontWeight:600, padding:'5px 14px', borderRadius:20, marginBottom:16 }}>
-                <span style={{ width:6, height:6, borderRadius:'50%', background:T.accent, display:'inline-block' }}/> {t('profile_complete')}
+            {saved && (
+              <div style={{ padding: '9px 13px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 9, fontSize: 12, color: '#15803d', display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
+                <Check size={13}/> {t('profile_updated')}
               </div>
             )}
+            {error && (
+              <div style={{ padding: '9px 13px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 9, fontSize: 12, color: '#dc2626', marginBottom: 14 }}>⚠ {error}</div>
+            )}
 
-            {/* Stats */}
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(100px, 1fr))', gap:10, textAlign:'left' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+              gap: 12,
+            }}>
               {[
-                { label:t('profile_total')||'TOTAL SCANS', value:statsLoading?'…':String(stats.total_scans) },
-                { label:'LEADS',            value:statsLoading?'…':String(stats.avg_leads) },
-              ].map(s=>(
-                <div key={s.label} style={{ background:`${T.accent}10`, border:`1px solid ${T.accent}22`, borderRadius:12, padding:'12px 14px' }}>
-                  {statsLoading
-                    ?<div style={{ height:20, background:T.cardBorder, borderRadius:6, animation:'shimmer 1.5s infinite', marginBottom:4 }}/>
-                    :<div style={{ fontSize:18, fontWeight:700, color:T.accent }}>{s.value}</div>
-                  }
-                  <div style={{ fontSize:10, color:T.textMuted, marginTop:3, fontWeight:600, textTransform:'uppercase', letterSpacing:.5 }}>{s.label}</div>
+                { name: 'full_name', label: t('profile_fullname') || 'FULL NAME', icon: User,     type: 'text',   span: false },
+                { name: 'email',     label: t('profile_email') || 'EMAIL ADDRESS',   icon: Mail,     type: 'email',  span: false, readOnly: true },
+                { name: 'age',       label: t('profile_age') || 'AGE',     icon: Calendar, type: 'number', span: false },
+                { name: 'gender',    label: t('profile_gender') || 'GENDER',  icon: Venus,    type: 'select', span: false },
+                { name: 'phone',     label: t('profile_phone') || 'PHONE',   icon: Phone,    type: 'tel',    span: true },
+              ].map(({ name, label, icon: Icon, type, span, readOnly }) => (
+                <div key={name} style={{ gridColumn: span && !isMobile ? '1 / -1' : 'auto' }}>
+                  <label style={lbl}><Icon size={9}/> {label}</label>
+                  {readOnly ? (
+                    <div style={{ ...readFld, justifyContent: 'space-between' }}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13 }}>{user?.email || '—'}</span>
+                      <span style={{ fontSize: 10, background: T.cardBorder, color: T.textMuted, padding: '1px 7px', borderRadius: 4, fontWeight: 500, marginLeft: 8, flexShrink: 0 }}>{t('profile_readonly') || 'Read only'}</span>
+                    </div>
+                  ) : editing ? (
+                    type === 'select'
+                      ? <select name={name} value={form[name]} onChange={handleChange} style={{ ...inp, padding: '9px 12px' }}><option value="">{t('select_gender') || 'Select'}</option><option>Male</option><option>Female</option><option>Other</option></select>
+                      : <input name={name} type={type} value={form[name]} onChange={handleChange} style={inp}/>
+                  ) : (
+                    <div style={readFld}>{name === 'age' && user?.age ? `${user.age} Years` : user?.[name === 'full_name' ? 'name' : name] || '—'}</div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
 
-          {/* ── Details ── */}
-          <div style={{ flex:'3 1 320px', display:'flex', flexDirection:'column', gap:'clamp(14px, 3vw, 16px)', minWidth:0 }}>
+          {/* Account Card */}
+          <div style={{ ...card, padding: '18px 20px' }}>
+            <h2 style={{ fontSize: 14, fontWeight: 700, color: T.textPrimary, margin: '0 0 14px' }}>{t('profile_account') || 'Account'}</h2>
 
-            {/* Personal Information */}
-            <div style={{ ...card, padding:'clamp(18px, 4vw, 26px)' }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20, flexWrap:'wrap', gap:10 }}>
-                <div>
-                  <h2 style={{ fontSize:15, fontWeight:700, color:T.textPrimary }}>{t('profile_info') || 'Personal Information'}</h2>
-                  <p style={{ fontSize:12, color:T.textMuted, marginTop:2 }}>{t('profile_info_sub') || 'Your basic profile details'}</p>
-                </div>
-                {!editing
-                  ?<button onClick={()=>setEditing(true)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33`, borderRadius:10, fontSize:12, fontWeight:600, cursor:'pointer' }}><Edit2 size={12}/> {t('profile_edit') || 'Edit Profile'}</button>
-                  :<div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                    <button onClick={()=>{setEditing(false);setError('');}} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'8px 12px', background:T.cardBg, color:T.textSecondary, border:`1px solid ${T.cardBorder}`, borderRadius:10, fontSize:12, fontWeight:600, cursor:'pointer', flex:'1 1 auto' }}><X size={12}/> {t('profile_cancel')}</button>
-                    <button onClick={handleSave} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'8px 14px', background:T.accent, color:T.accentText, border:'none', borderRadius:10, fontSize:12, fontWeight:700, cursor:'pointer', flex:'1 1 auto' }}><Save size={12}/> {t('profile_save')}</button>
-                  </div>
-                }
-              </div>
-              {saved&&<div style={{ padding:'10px 14px', background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:10, fontSize:13, color:'#15803d', display:'flex', alignItems:'center', gap:8, marginBottom:16 }}><Check size={14}/> {t('profile_updated')}</div>}
-              {error&&<div style={{ padding:'10px 14px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:10, fontSize:13, color:'#dc2626', marginBottom:16 }}>⚠ {error}</div>}
-
-              {/* Grid fixed for desktop: perfectly aligns items without leaving random gaps */}
-              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap:16 }}>
-                {[
-                  {name:'full_name', label:t('profile_fullname')||'FULL NAME', icon:User,     type:'text',   span:false},
-                  {name:'email',     label:t('profile_email')||'EMAIL ADDRESS',    icon:Mail,     type:'email',  span:false, readOnly:true},
-                  {name:'age',       label:t('profile_age')||'AGE',      icon:Calendar, type:'number', span:false},
-                  {name:'gender',    label:t('profile_gender')||'GENDER',   icon:Venus,    type:'select', span:false},
-                  {name:'phone',     label:t('profile_phone')||'PHONE',    icon:Phone,    type:'tel',    span:true},
-                ].map(({name,label,icon:Icon,type,span,readOnly})=>(
-                  <div key={name} style={{ gridColumn: span ? '1 / -1' : 'auto' }}>
-                    <label style={{ ...lbl, display:'flex', alignItems:'center', gap:4 }}><Icon size={10}/> {label}</label>
-                    {readOnly?(
-                      <div style={{ ...readFld, justifyContent:'space-between' }}>
-                        <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:13 }}>{user?.email||'—'}</span>
-                        <span style={{ fontSize:10, background:T.cardBorder, color:T.textMuted, padding:'1px 7px', borderRadius:4, fontWeight:500, marginLeft:8, flexShrink:0 }}>{t('profile_readonly') || 'Read only'}</span>
-                      </div>
-                    ):editing?(
-                      type==='select'
-                        ?<select name={name} value={form[name]} onChange={handleChange} style={{ ...inp, padding:'10px 12px' }}><option value="">{t('select_gender')||'Select'}</option><option>Male</option><option>Female</option><option>Other</option></select>
-                        :<input name={name} type={type} value={form[name]} onChange={handleChange} style={inp}/>
-                    ):(
-                      <div style={readFld}>{name==='age'&&user?.age?`${user.age} Years`:user?.[name==='full_name'?'name':name]||'—'}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Account */}
-            <div style={{ ...card, padding:'clamp(18px, 4vw, 26px)' }}>
-              <h2 style={{ fontSize:15, fontWeight:700, color:T.textPrimary, marginBottom:16 }}>{t('profile_account') || 'Account'}</h2>
-
-              {/* Change Password Card - Redesigned to match image exactly */}
-              <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', padding:16, border:`1px solid ${T.cardBorder}`, borderRadius:12, gap:16, marginBottom:16 }}>
-                <div style={{ display:'flex', alignItems:'center', gap:12, flex:'1 1 200px' }}>
-                  <div style={{ width:40, height:40, borderRadius:10, background:`${T.accent}14`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    <Lock size={18} color={T.accent}/>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* Change Password */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px', border: `1px solid ${T.cardBorder}`, borderRadius: 12, gap: 12, flexWrap: isMobileOrTablet ? 'wrap' : 'nowrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 11, flex: '1 1 180px' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 9, background: `${T.accent}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Lock size={16} color={T.accent}/>
                   </div>
                   <div>
-                    <div style={{ fontSize:14, fontWeight:600, color:T.textPrimary }}>{t('profile_chg_pwd') || 'Change Password'}</div>
-                    <div style={{ fontSize:12, color:T.textMuted }}>{t('profile_chg_sub') || 'Update your login password'}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.textPrimary }}>{t('profile_chg_pwd') || 'Change Password'}</div>
+                    <div style={{ fontSize: 11, color: T.textMuted }}>{t('profile_chg_sub') || 'Update your login password'}</div>
                   </div>
                 </div>
-                <button onClick={()=>setShowPwd(true)} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'8px 16px', background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33`, borderRadius:10, fontSize:13, fontWeight:600, cursor:'pointer', flex: isMobileOrTablet ? '1 1 100%' : '0 1 auto' }}>
-                  <Lock size={14}/> {t('profile_update') || 'Update'}
+                <button onClick={() => setShowPwd(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 14px', background: `${T.accent}12`, color: T.accent, border: `1px solid ${T.accent}30`, borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flex: isMobileOrTablet ? '1 1 100%' : '0 0 auto' }}>
+                  <Lock size={12}/> {t('profile_update') || 'Update'}
                 </button>
               </div>
 
-              {/* Delete Account Card - Redesigned to match image exactly */}
-              <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', padding:16, border:`1px solid ${T.cardBorder}`, borderRadius:12, gap:16 }}>
-                <div style={{ display:'flex', alignItems:'center', gap:12, flex:'1 1 200px' }}>
-                  <div style={{ width:40, height:40, borderRadius:10, background:'#fef2f2', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    <Trash2 size={18} color="#ef4444"/>
+              {/* Delete Account */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px', border: '1px solid #fecaca', borderRadius: 12, gap: 12, flexWrap: isMobileOrTablet ? 'wrap' : 'nowrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 11, flex: '1 1 180px' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 9, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Trash2 size={16} color="#ef4444"/>
                   </div>
                   <div>
-                    <div style={{ fontSize:14, fontWeight:600, color:'#ef4444' }}>{t('profile_del_acct') || 'Delete Account'}</div>
-                    <div style={{ fontSize:12, color:T.textMuted }}>{t('profile_del_sub') || 'Permanently remove your account and all data'}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>{t('profile_del_acct') || 'Delete Account'}</div>
+                    <div style={{ fontSize: 11, color: T.textMuted }}>{t('profile_del_sub') || 'Permanently remove your account and all data'}</div>
                   </div>
                 </div>
-                <button onClick={()=>setShowDel(true)} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'8px 16px', background:'#fef2f2', color:'#ef4444', border:'1px solid #fecaca', borderRadius:10, fontSize:13, fontWeight:600, cursor:'pointer', flex: isMobileOrTablet ? '1 1 100%' : '0 1 auto' }}>
-                  <Trash2 size={14}/> {t('profile_delete') || 'Delete'}
+                <button onClick={() => setShowDel(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 14px', background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flex: isMobileOrTablet ? '1 1 100%' : '0 0 auto' }}>
+                  <Trash2 size={12}/> {t('profile_delete') || 'Delete'}
                 </button>
               </div>
-
             </div>
           </div>
+
         </div>
       </div>
 
-      {showPwd&&<ChangePasswordModal email={user?.email} onClose={()=>setShowPwd(false)} T={T} t={t}/>}
-      {showDel&&<DeleteAccountModal  email={user?.email} onClose={()=>setShowDel(false)} onConfirm={handleDeleted} T={T} t={t}/>}
+      {showPwd && <ChangePasswordModal email={user?.email} onClose={() => setShowPwd(false)} T={T} t={t}/>}
+      {showDel && <DeleteAccountModal  email={user?.email} onClose={() => setShowDel(false)} onConfirm={handleDeleted} T={T} t={t}/>}
     </div>
   );
 }
