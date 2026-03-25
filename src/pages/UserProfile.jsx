@@ -239,7 +239,7 @@ export default function Profile() {
       {/* Main Layout */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: isMobileOrTablet ? '1fr' : '260px 1fr',
+        gridTemplateColumns: isMobileOrTablet ? '1fr' : '300px 1fr',
         gap: 16,
         alignItems: 'start',
         width: '100%',
@@ -252,19 +252,19 @@ export default function Profile() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 16 }}>
             <div style={{ position: 'relative', marginBottom: 10 }}>
               {profilePic
-                ? <img src={profilePic} alt="Profile" style={{ width: 80, height: 80, borderRadius: 20, objectFit: 'cover', border: `3px solid ${T.accent}`, display: 'block' }}/>
-                : <div style={{ width: 80, height: 80, borderRadius: 20, background: T.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 16px ${T.accent}44` }}>
-                    <span style={{ color: T.accentText, fontSize: 26, fontWeight: 700 }}>{initials.toUpperCase()}</span>
+                ? <img src={profilePic} alt="Profile" style={{ width: 96, height: 96, borderRadius: 22, objectFit: 'cover', border: `3px solid ${T.accent}`, display: 'block' }}/>
+                : <div style={{ width: 96, height: 96, borderRadius: 22, background: T.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 16px ${T.accent}44` }}>
+                    <span style={{ color: T.accentText, fontSize: 32, fontWeight: 700 }}>{initials.toUpperCase()}</span>
                   </div>
               }
-              <button onClick={() => picInputRef.current?.click()} title="Upload photo" style={{ position: 'absolute', bottom: -5, right: -5, width: 28, height: 28, borderRadius: 8, background: T.accent, border: `2px solid ${T.cardBg}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <button onClick={() => picInputRef.current?.click()} title="Upload photo" style={{ position: 'absolute', bottom: -5, right: -5, width: 30, height: 30, borderRadius: 9, background: T.accent, border: `2px solid ${T.cardBg}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                 <Camera size={12} color={T.accentText}/>
               </button>
               <input ref={picInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePicChange}/>
             </div>
 
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: T.textPrimary, margin: '0 0 2px', textAlign: 'center' }}>{user?.name || 'User'}</h2>
-            <p style={{ fontSize: 11, color: T.textMuted, margin: 0, wordBreak: 'break-all', textAlign: 'center' }}>{user?.email}</p>
+            <h2 style={{ fontSize: 17, fontWeight: 700, color: T.textPrimary, margin: '0 0 3px', textAlign: 'center' }}>{user?.name || 'User'}</h2>
+            <p style={{ fontSize: 12, color: T.textMuted, margin: 0, wordBreak: 'break-all', textAlign: 'center' }}>{user?.email}</p>
           </div>
 
           {/* Photo buttons */}
@@ -297,7 +297,7 @@ export default function Profile() {
               <div key={s.label} style={{ background: `${T.accent}0e`, border: `1px solid ${T.accent}20`, borderRadius: 10, padding: '10px 12px' }}>
                 {statsLoading
                   ? <div style={{ height: 18, background: T.cardBorder, borderRadius: 5, animation: 'shimmer 1.5s infinite', marginBottom: 4 }}/>
-                  : <div style={{ fontSize: 20, fontWeight: 700, color: T.accent, lineHeight: 1 }}>{s.value}</div>
+                  : <div style={{ fontSize: 22, fontWeight: 700, color: T.accent, lineHeight: 1 }}>{s.value}</div>
                 }
                 <div style={{ fontSize: 9, color: T.textMuted, marginTop: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{s.label}</div>
               </div>
