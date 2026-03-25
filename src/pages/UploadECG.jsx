@@ -152,7 +152,8 @@ function MedicalECG({ signals, leadList, recordId }) {
     return ()=>ro.disconnect();
   },[draw]);
 
-  return <div ref={wrapRef} style={{width:"100%", maxWidth: "100%", overflow: "hidden"}}><canvas ref={canvasRef} style={{display:"block",width:"100%"}}/></div>;
+  // Added id="medical-ecg-canvas" for PDF extraction
+  return <div ref={wrapRef} style={{width:"100%", maxWidth: "100%", overflow: "hidden"}}><canvas id="medical-ecg-canvas" ref={canvasRef} style={{display:"block",width:"100%"}}/></div>;
 }
 
 /* ─── Constants ───────────────────────────────────────────────────────────── */
@@ -175,6 +176,7 @@ export default function UploadECG() {
   const [error,setError]       = useState(null);
   const [selLead,setSelLead]   = useState(null);
   const [tab,setTab]           = useState("medical");
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
   const TABS = [
     {key:"original", label:t('tab_original')},
@@ -204,6 +206,75 @@ export default function UploadECG() {
       else setError(json.detail||"Invalid response");
     } catch { setError(t('upload_error')); }
     setLoading(false);
+  };
+
+  /* ─── PDF Generation Function ────────────────────────────────────────────── */
+  const handleDownloadPDF = async () => {
+    try {
+      setIsPdfGenerating(true);
+      // Dynamically import to prevent SSR/build issues if any
+      const { jsPDF } = await import("jspdf");
+      
+      const doc = new jsPDF("landscape", "mm", "a4"); // A4 Landscape: 297 x 210 mm
+      const pageWidth = doc.internal.pageSize.getWidth();
+      
+      // Document Header
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(31, 41, 55);
+      doc.text("Automated 12-Lead ECG Analysis Report", 14, 20);
+
+      // Meta Info
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(107, 114, 128);
+      
+      const durationText = result.computed_duration 
+        ? `${result.computed_duration}s` 
+        : (result.signals?.II ? `${(result.signals.II.length/500).toFixed(1)}s` : "N/A");
+
+      doc.text(`Record ID: ${recordId || "Unknown"}`, 14, 30);
+      doc.text(`Date of Analysis: ${new Date().toLocaleString()}`, 14, 36);
+      doc.text(`Leads Detected: ${result.lead_list?.length || 0}`, 130, 30);
+      doc.text(`Computed Duration: ${durationText}`, 130, 36);
+
+      // Divider Line
+      doc.setDrawColor(229, 231, 235);
+      doc.setLineWidth(0.5);
+      doc.line(14, 42, pageWidth - 14, 42);
+
+      // Get the rendered Canvas image
+      const canvas = document.getElementById("medical-ecg-canvas");
+      if (canvas) {
+        // High quality extraction
+        const imgData = canvas.toDataURL("image/png", 1.0);
+        
+        // Calculate proportional dimensions fitting the A4 page
+        const margin = 14;
+        const maxPdfWidth = pageWidth - (margin * 2); 
+        const canvasRatio = canvas.width / canvas.height;
+        const pdfHeight = maxPdfWidth / canvasRatio;
+
+        // Add to document
+        doc.addImage(imgData, "PNG", margin, 48, maxPdfWidth, pdfHeight);
+      } else {
+        doc.setTextColor(220, 38, 38);
+        doc.text("Warning: Graphical ECG grid could not be captured.", 14, 55);
+      }
+
+      // Footer
+      doc.setFontSize(9);
+      doc.setTextColor(156, 163, 175);
+      doc.text("Generated securely by ECG AI System.", 14, doc.internal.pageSize.getHeight() - 10);
+
+      // Save
+      doc.save(`ECG_Report_${recordId || 'analysis'}.pdf`);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Failed to generate PDF. Make sure jsPDF is installed: npm install jspdf");
+    } finally {
+      setIsPdfGenerating(false);
+    }
   };
 
   const card    = { background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:16, padding:"22px 24px", marginBottom:20, boxShadow:T.cardShadow, width: "100%", boxSizing: "border-box" };
@@ -324,7 +395,34 @@ export default function UploadECG() {
             <div>
               <div style={{fontSize:11,fontWeight:700,color:T.textMuted,letterSpacing:1,textTransform:"uppercase",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
                 Output Image — Full 12-Lead ECG <div style={{flex:1,height:1,background:T.headingLine}}/>
+                
+                {/* PDF Download Button added here seamlessly */}
+                <button 
+                  onClick={handleDownloadPDF} 
+                  disabled={isPdfGenerating}
+                  style={{
+                    padding: "7px 14px", 
+                    background: isPdfGenerating ? "#9ca3af" : T.accent, 
+                    color: "#fff", 
+                    border: "none", 
+                    borderRadius: 8, 
+                    fontSize: 11, 
+                    fontWeight: 700, 
+                    cursor: isPdfGenerating ? "wait" : "pointer", 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: 6,
+                    boxShadow: isPdfGenerating ? "none" : `0 2px 10px ${T.accent}33`,
+                    transition: "all 0.2s"
+                  }}
+                >
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  {isPdfGenerating ? "Generating..." : "Download Report"}
+                </button>
               </div>
+
               <div style={{background:"#fce8e8",borderRadius:14,overflow:"hidden",border:"1.5px solid #f0c0c0",boxShadow:"0 4px 20px rgba(0,0,0,.09)", width: "100%", boxSizing: "border-box"}}>
                 <MedicalECG signals={result.signals} leadList={result.lead_list} recordId={recordId}/>
               </div>
