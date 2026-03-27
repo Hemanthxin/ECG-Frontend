@@ -7,12 +7,12 @@ import { useResponsive } from '../hooks/useresponsive';
 // ── VERCEL FIX: Ensure your 'assets' folder is inside the 'public' folder! ──
 // Example: public/assets/image.png
 const LEADERSHIP = [
-  { id:'director', name:'DR. USHA MANJUNATH',  role:'Professor & Director, IIHMR Bangalore',             src:'/assets/Screenshot%202026-03-19%20220050.png', bio:'Professor with 25+ years of experience. Leads the IIHMR institute and its AI healthcare initiatives.', email:'director@ihmr.ai', tags:['Healthcare Management','AI Research','Leadership'] },
+  { id:'director', name:'DR. USHA MANJUNATH',  role:'Professor & Director, IIHMR Bangalore',           src:'/assets/Screenshot%202026-03-19%20220050.png', bio:'Professor with 25+ years of experience. Leads the IIHMR institute and its AI healthcare initiatives.', email:'director@ihmr.ai', tags:['Healthcare Management','AI Research','Leadership'] },
   { id:'admire',   name:'DR. AKASH PRABHUNE',  role:'Assistant Professor & Lead ADMIRE, IIHMR Bangalore',  src:'/assets/Screenshot 2026-03-24 155953.png', bio:'Lead of AI-driven Medical Research (ADMIRE) program. Spearheads cross-disciplinary projects combining cardiology, data science, and clinical outcomes.', email:'admire@ihmr.ai', tags:['ADMIRE Lead','Clinical AI','Dentist'] },
 ];
 
 const TEAM = [
-  { id:'rk', name:'MR. VINAY R SRIHARI',  role:'Assistant Professor, IIHMR Bangalore', src:'/assets/Screenshot 2026-03-24 160050.png',                              bio:'Expert in health management research and AI-driven medical solutions.', tags:['Health Management','Research','AI'] },
+  { id:'rk', name:'MR. VINAY R SRIHARI',  role:'Assistant Professor, IIHMR Bangalore', src:'/assets/Screenshot 2026-03-24 160050.png',                               bio:'Expert in health management research and AI-driven medical solutions.', tags:['Health Management','Research','AI'] },
   { id:'ar', name:'MS. GNANASIRI',        role:'Data Scientist, IIHMR Bangalore', src:'/assets/WhatsApp Image 2026-03-24 at 3.48.08 PM.jpeg',   bio:'Built the nnUNet-Based ECG digitization pipeline.', tags:['nnUNet','Research','Healthcare AI'] },
   { id:'hr', name:'MS. AKILA',    role:'Data Scientist, IIHMR Bangalore', src:'/assets/Akila.png',        bio:'Built the nnUNet-Based ECG digitization pipeline.',    tags:['PyTorch','YOLO','Signal Processing'] },
   { id:'ps', name:'MR. HEMANTH B',        role:'Data Scientist, IIHMR Bangalore', src:'/assets/1000136526.jpg',                          bio:'Built the YOLO-based ECG digitization pipeline.', tags:['ECG Digitization','YOLO','Signal Processing'] },
@@ -24,14 +24,21 @@ const PAPERS = [
 
 function PaperModal({ paper, T, onClose, t }) {
   return (
-    <div style={{ position:'fixed', inset:0, background:T.modalBack, display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:16 }} onClick={onClose}>
-      <div style={{ background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:20, width:'100%', maxWidth:560, boxShadow:'0 20px 60px rgba(0,0,0,0.35)', maxHeight:'90vh', overflowY:'auto' }} onClick={e=>e.stopPropagation()}>
+    <div style={{ position:'fixed', inset:0, background:T.modalBack, display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:16, backdropFilter:'blur(4px)' }} onClick={onClose}>
+      <div style={{ background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:20, width:'100%', maxWidth:560, boxShadow:'0 20px 60px rgba(0,0,0,0.35)', maxHeight:'90vh', overflowY:'auto', transform:'scale(1)', transition:'transform 0.2s ease-out' }} onClick={e=>e.stopPropagation()}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', padding:'20px 24px', borderBottom:`1px solid ${T.divider}` }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
             <div style={{ width:36, height:36, borderRadius:10, background:`${T.accent}18`, display:'flex', alignItems:'center', justifyContent:'center' }}><FileText size={17} color={T.accent}/></div>
             <div><div style={{ fontSize:10, fontWeight:700, color:T.accent, letterSpacing:1, textTransform:'uppercase' }}>Research Paper</div><div style={{ fontSize:10, color:T.textMuted }}>{paper.journal} · {paper.year}</div></div>
           </div>
-          <button onClick={onClose} style={{ width:28, height:28, borderRadius:8, border:`1px solid ${T.cardBorder}`, background:T.cardBg, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><X size={13} color={T.textMuted}/></button>
+          <button 
+            onClick={onClose} 
+            style={{ width:28, height:28, borderRadius:8, border:`1px solid ${T.cardBorder}`, background:T.cardBg, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = T.divider; e.currentTarget.style.transform = 'scale(1.1)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = T.cardBg; e.currentTarget.style.transform = 'scale(1)'; }}
+          >
+            <X size={13} color={T.textMuted}/>
+          </button>
         </div>
         <div style={{ padding:'22px 24px' }}>
           <h2 style={{ fontSize:15, fontWeight:700, color:T.textPrimary, lineHeight:1.5, marginBottom:8 }}>{paper.title}</h2>
@@ -41,10 +48,20 @@ function PaperModal({ paper, T, onClose, t }) {
             <p style={{ fontSize:13, color:T.textSecondary, lineHeight:1.7 }}>{paper.abstract}</p>
           </div>
           <div style={{ display:'flex', gap:10 }}>
-            <button onClick={()=>window.open(paper.pdfUrl,'_blank','noopener,noreferrer')} style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'12px 0', borderRadius:12, border:'none', background:`linear-gradient(135deg,${T.accent},${T.accentHover})`, color:T.accentText, fontWeight:700, fontSize:13, cursor:'pointer' }}>
+            <button 
+              onClick={()=>window.open(paper.pdfUrl,'_blank','noopener,noreferrer')} 
+              style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'12px 0', borderRadius:12, border:'none', background:`linear-gradient(135deg,${T.accent},${T.accentHover})`, color:T.accentText, fontWeight:700, fontSize:13, cursor:'pointer', transition:'all 0.2s', boxShadow:`0 4px 12px ${T.accent}44` }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 6px 16px ${T.accent}66`; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 4px 12px ${T.accent}44`; }}
+            >
               <FileText size={15}/> {t('about_open_pdf')}
             </button>
-            <button onClick={onClose} style={{ padding:'12px 20px', borderRadius:12, border:`1px solid ${T.cardBorder}`, background:T.cardBg, color:T.textSecondary, fontWeight:600, fontSize:13, cursor:'pointer' }}>Close</button>
+            <button 
+              onClick={onClose} 
+              style={{ padding:'12px 20px', borderRadius:12, border:`1px solid ${T.cardBorder}`, background:T.cardBg, color:T.textSecondary, fontWeight:600, fontSize:13, cursor:'pointer', transition:'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = T.divider; e.currentTarget.style.color = T.textPrimary; }}
+              onMouseLeave={e => { e.currentTarget.style.background = T.cardBg; e.currentTarget.style.color = T.textSecondary; }}
+            >Close</button>
           </div>
         </div>
       </div>
@@ -54,9 +71,12 @@ function PaperModal({ paper, T, onClose, t }) {
 
 function PersonPhoto({ src, name, size, radius }) {
   return (
-    <div style={{ width:size, height:size, borderRadius:radius, overflow:'hidden', flexShrink:0, border:'4px solid rgba(37,99,235,0.2)', boxShadow:'0 6px 24px rgba(0,0,0,0.14)' }}>
-      {/* Vercel fallback: if the image path fails to load, it will show an empty block instead of a broken icon */}
-      <img src={src} alt={name} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.parentNode.style.background = '#e2e8f0'; }} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+    <div 
+      style={{ width:size, height:size, borderRadius:radius, overflow:'hidden', flexShrink:0, border:'4px solid rgba(37,99,235,0.2)', boxShadow:'0 6px 24px rgba(0,0,0,0.14)', transition:'all 0.3s ease', cursor:'pointer' }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05) rotate(1deg)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.25)'; e.currentTarget.style.borderColor = 'rgba(37,99,235,0.5)'; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1) rotate(0deg)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.14)'; e.currentTarget.style.borderColor = 'rgba(37,99,235,0.2)'; }}
+    >
+      <img src={src} alt={name} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.parentNode.style.background = '#e2e8f0'; }} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', transition:'transform 0.3s ease' }}/>
     </div>
   );
 }
@@ -67,18 +87,18 @@ export default function AboutUs() {
   const { isMobile, isTablet } = useResponsive();
   const [activePaper, setActivePaper] = useState(null);
 
-  const card = { background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:18, boxShadow:T.cardShadow };
+  const card = { background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:18, boxShadow:T.cardShadow, transition:'all 0.3s ease' };
   const pagePadding = isMobile ? '20px 16px' : isTablet ? '24px 20px' : '32px 40px';
 
   return (
     <div style={{ padding: pagePadding, background:T.pageBg, minHeight:'100%' }}>
 
       {/* Hero */}
-      <div style={{ background:`linear-gradient(135deg,${T.accent},${T.accentHover})`, borderRadius:20, padding: isMobile ? '24px 20px' : '28px 32px', marginBottom:24, display:'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent:'space-between', alignItems: isMobile ? 'flex-start' : 'flex-start', flexWrap:'wrap', gap:16 }}>
+      <div style={{ background:`linear-gradient(135deg,${T.accent},${T.accentHover})`, borderRadius:20, padding: isMobile ? '24px 20px' : '28px 32px', marginBottom:24, display:'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent:'space-between', alignItems: isMobile ? 'flex-start' : 'flex-start', flexWrap:'wrap', gap:16, boxShadow:`0 10px 30px ${T.accent}33` }}>
         <div>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
             <div style={{ width:32, height:32, borderRadius:9, background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center' }}><Heart size={16} color="#fff"/></div>
-            <span style={{ color:'rgba(255,255,255,0.8)', fontSize:12, fontWeight:500 }}>IHMR.AI</span>
+            <span style={{ color:'rgba(255,255,255,0.8)', fontSize:12, fontWeight:500, letterSpacing:1 }}>IHMR.AI</span>
           </div>
           <h1 style={{ color:'#fff', fontSize: isMobile ? 20 : 22, fontWeight:700, marginBottom:8 }}>Institute of Health Management Research</h1>
           <p style={{ color:'rgba(255,255,255,0.8)', fontSize:13, lineHeight:1.6, maxWidth:520 }}>
@@ -86,26 +106,46 @@ export default function AboutUs() {
           </p>
         </div>
         <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-          {[{icon:MapPin,text:'Bangalore, India'},{icon:Mail,text:'admire.digihealth@iihmrbangalore.edu.in'}].map(({icon:Icon,text})=>(
-            <div key={text} style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.15)', color:'#fff', fontSize:12, fontWeight:500, padding:'7px 14px', borderRadius:10 }}>
-              <Icon size={12}/> {text}
-            </div>
-          ))}
+          {/* Location Pill */}
+          <div 
+            style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.15)', color:'#fff', fontSize:12, fontWeight:500, padding:'7px 14px', borderRadius:10, cursor:'pointer', transition:'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.25)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            onClick={() => window.open('https://maps.google.com/?q=IIHMR+Bangalore', '_blank')}
+          >
+            <MapPin size={12}/> Bangalore, India
+          </div>
+          
+          {/* Email Pill */}
+          <a 
+            href="mailto:admire.digihealth@iihmrbangalore.edu.in"
+            style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.15)', color:'#fff', fontSize:12, fontWeight:500, padding:'7px 14px', borderRadius:10, cursor:'pointer', transition:'all 0.2s', textDecoration:'none' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.25)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+          >
+            <Mail size={12}/> admire.digihealth@iihmrbangalore.edu.in
+          </a>
         </div>
       </div>
 
       {/* Stats */}
       <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4,1fr)', gap:14, marginBottom:24 }}>
         {[
-          { icon:Heart,      label:'ECGs Digitized',  value:'100+',          click:false },
+          { icon:Heart,      label:'ECGs Digitized',  value:'100+',      click:false },
           { icon:Award,      label:'Avg SNR Score',    value:'14.4 dB',        click:false },
           { icon:Users,      label:'Hospitals Served', value:'1',              click:false },
           { icon:Microscope, label:t('about_papers'),  value:`${PAPERS.length}`, click:true },
         ].map(({icon:Icon,label,value,click})=>(
           <div key={label} onClick={click?()=>document.getElementById('research-papers')?.scrollIntoView({behavior:'smooth'}):undefined}
-            style={{ ...card, padding:'20px', textAlign:'center', cursor:click?'pointer':'default', transition:'all 0.15s', ...(click?{border:`1px solid ${T.accent}55`}:{}) }}
-            onMouseEnter={e=>{ if(click) e.currentTarget.style.boxShadow=`0 4px 20px ${T.accent}33`; }}
-            onMouseLeave={e=>{ if(click) e.currentTarget.style.boxShadow=T.cardShadow; }}
+            style={{ ...card, padding:'20px', textAlign:'center', cursor:click?'pointer':'default', ...(click?{border:`1px solid ${T.accent}55`}:{}) }}
+            onMouseEnter={e=>{ 
+              e.currentTarget.style.transform = 'translateY(-3px)';
+              e.currentTarget.style.boxShadow = click ? `0 8px 25px ${T.accent}44` : `0 8px 25px rgba(0,0,0,0.08)`; 
+            }}
+            onMouseLeave={e=>{ 
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = T.cardShadow; 
+            }}
           >
             <div style={{ width:38, height:38, borderRadius:11, background:`${T.accent}18`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 12px' }}><Icon size={18} color={T.accent}/></div>
             <div style={{ fontSize:22, fontWeight:700, color:T.accent }}>{value}</div>
@@ -121,7 +161,10 @@ export default function AboutUs() {
           { key:'Our Web App', body:'To digitize, democratize, and decode the 12-lead ECG — transforming paper records into structured, AI-ready signals that cardiologists can act on instantly.' },
           { key:'about_tech',    body:'Our pipeline combines YOLO-based row detection, ORB feature matching for image alignment, and a custom nnUNet model for segmentation — achieving an average SNR of 14.4 dB.' },
         ].map(({key,body})=>(
-          <div key={key} style={{ ...card, padding:24 }}>
+          <div key={key} style={{ ...card, padding:24 }}
+            onMouseEnter={e=>{ e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 25px rgba(0,0,0,0.06)`; }}
+            onMouseLeave={e=>{ e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = T.cardShadow; }}
+          >
             <h2 style={{ fontSize:13, fontWeight:700, color:T.textPrimary, textTransform:'uppercase', letterSpacing:0.8, marginBottom:10 }}>{t(key)}</h2>
             <p style={{ fontSize:13, color:T.textSecondary, lineHeight:1.7 }}>{body}</p>
           </div>
@@ -136,16 +179,22 @@ export default function AboutUs() {
         </div>
         <div style={{ display:'grid', gridTemplateColumns: isMobile || isTablet ? '1fr' : '1fr 1fr', gap:18 }}>
           {LEADERSHIP.map(person=>(
-            <div key={person.id} style={{ ...card, padding:24, display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:22, alignItems: isMobile ? 'center' : 'flex-start', textAlign: isMobile ? 'center' : 'left' }}>
-              {/* INCREASED SIZE HERE: Desktop=220px, Mobile=160px */}
+            <div key={person.id} 
+              style={{ ...card, padding:24, display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:22, alignItems: isMobile ? 'center' : 'flex-start', textAlign: isMobile ? 'center' : 'left' }}
+              onMouseEnter={e=>{ e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = `0 12px 30px rgba(0,0,0,0.08)`; e.currentTarget.style.borderColor = T.accent; }}
+              onMouseLeave={e=>{ e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = T.cardShadow; e.currentTarget.style.borderColor = T.cardBorder; }}
+            >
               <PersonPhoto src={person.src} name={person.name} size={isMobile ? 160 : 220} radius={20}/>
               <div style={{ flex:1, minWidth:0 }}>
                 <h3 style={{ fontSize:16, fontWeight:700, color:T.textPrimary, marginBottom:3 }}>{person.name}</h3>
                 <div style={{ display:'inline-block', fontSize:11, fontWeight:700, color:T.accentText, background:T.accent, padding:'2px 10px', borderRadius:20, marginBottom:10 }}>{person.role}</div>
                 <p style={{ fontSize:12.5, color:T.textSecondary, lineHeight:1.7, marginBottom:12 }}>{person.bio}</p>
-                <div style={{ display:'flex', alignItems:'center', justifyContent: isMobile ? 'center' : 'flex-start', gap:6, marginBottom:12 }}><Mail size={11} color={T.textMuted}/><span style={{ fontSize:11, color:T.textMuted }}>{person.email}</span></div>
+                <a href={`mailto:${person.email}`} style={{ display:'inline-flex', alignItems:'center', justifyContent: isMobile ? 'center' : 'flex-start', gap:6, marginBottom:12, textDecoration:'none', cursor:'pointer' }}>
+                  <Mail size={11} color={T.accent}/>
+                  <span style={{ fontSize:11, color:T.textMuted, transition:'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = T.accent} onMouseLeave={e => e.currentTarget.style.color = T.textMuted}>{person.email}</span>
+                </a>
                 <div style={{ display:'flex', flexWrap:'wrap', justifyContent: isMobile ? 'center' : 'flex-start', gap:5 }}>
-                  {person.tags.map(tag=><span key={tag} style={{ fontSize:10, fontWeight:500, padding:'3px 9px', borderRadius:20, background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33` }}>{tag}</span>)}
+                  {person.tags.map(tag=><span key={tag} style={{ fontSize:10, fontWeight:500, padding:'3px 9px', borderRadius:20, background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33`, cursor:'default', transition:'all 0.2s' }} onMouseEnter={e => {e.currentTarget.style.background=T.accent; e.currentTarget.style.color=T.accentText;}} onMouseLeave={e => {e.currentTarget.style.background=`${T.accent}14`; e.currentTarget.style.color=T.accent;}}>{tag}</span>)}
                 </div>
               </div>
             </div>
@@ -161,15 +210,18 @@ export default function AboutUs() {
         </div>
         <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4,1fr)', gap:16 }}>
           {TEAM.map(member=>(
-            <div key={member.id} style={{ ...card, padding:22, display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center' }}>
-              {/* INCREASED SIZE HERE: Desktop=240px, Mobile=180px */}
+            <div key={member.id} 
+              style={{ ...card, padding:22, display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center' }}
+              onMouseEnter={e=>{ e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = `0 12px 30px rgba(0,0,0,0.08)`; e.currentTarget.style.borderColor = T.accent; }}
+              onMouseLeave={e=>{ e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = T.cardShadow; e.currentTarget.style.borderColor = T.cardBorder; }}
+            >
               <PersonPhoto src={member.src} name={member.name} size={isMobile ? 180 : 240} radius={16}/>
               <div style={{ marginTop:16, width:'100%' }}>
                 <div style={{ fontSize:14, fontWeight:700, color:T.textPrimary, marginBottom:3 }}>{member.name}</div>
                 <div style={{ fontSize:11, fontWeight:700, color:T.accent, marginBottom:10 }}>{member.role}</div>
                 <p style={{ fontSize:12, color:T.textMuted, lineHeight:1.65, marginBottom:14, textAlign: 'center' }}>{member.bio}</p>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:5, justifyContent:'center' }}>
-                  {member.tags.map(tag=><span key={tag} style={{ fontSize:10, fontWeight:500, padding:'3px 9px', borderRadius:20, background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33` }}>{tag}</span>)}
+                  {member.tags.map(tag=><span key={tag} style={{ fontSize:10, fontWeight:500, padding:'3px 9px', borderRadius:20, background:`${T.accent}14`, color:T.accent, border:`1px solid ${T.accent}33`, cursor:'default', transition:'all 0.2s' }} onMouseEnter={e => {e.currentTarget.style.background=T.accent; e.currentTarget.style.color=T.accentText;}} onMouseLeave={e => {e.currentTarget.style.background=`${T.accent}14`; e.currentTarget.style.color=T.accent;}}>{tag}</span>)}
                 </div>
               </div>
             </div>
@@ -189,9 +241,9 @@ export default function AboutUs() {
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           {PAPERS.map((paper,i)=>(
             <div key={paper.id} onClick={()=>setActivePaper(paper)}
-              style={{ ...card, padding:'16px 22px', cursor:'pointer', transition:'all 0.15s', display:'flex', alignItems:'center', gap:16 }}
-              onMouseEnter={e=>{ e.currentTarget.style.borderColor=T.accent; e.currentTarget.style.boxShadow=`0 4px 16px ${T.accent}22`; e.currentTarget.style.transform='translateY(-1px)'; }}
-              onMouseLeave={e=>{ e.currentTarget.style.borderColor=T.cardBorder; e.currentTarget.style.boxShadow=T.cardShadow; e.currentTarget.style.transform='none'; }}
+              style={{ ...card, padding:'16px 22px', cursor:'pointer', display:'flex', alignItems:'center', gap:16 }}
+              onMouseEnter={e=>{ e.currentTarget.style.borderColor=T.accent; e.currentTarget.style.boxShadow=`0 6px 20px ${T.accent}25`; e.currentTarget.style.transform='translateY(-2px)'; }}
+              onMouseLeave={e=>{ e.currentTarget.style.borderColor=T.cardBorder; e.currentTarget.style.boxShadow=T.cardShadow; e.currentTarget.style.transform='translateY(0)'; }}
             >
               <div style={{ width:36, height:36, borderRadius:10, background:`${T.accent}14`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:13, fontWeight:700, color:T.accent }}>{i+1}</div>
               <div style={{ flex:1, minWidth:0 }}>
