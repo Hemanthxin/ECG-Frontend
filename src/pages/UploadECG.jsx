@@ -546,14 +546,14 @@ export default function UploadECG() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20 }}>
               <div style={{ background: T.inputBg, borderRadius: 12, padding: 8, border: `1px solid ${T.divider}` }}>
                 <div style={{ width: "100%", height: 160, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <img src="public/assets/ECG-1028.png" alt="Good Quality ECG 1" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src="/assets/ECG-1028.png" alt="Good Quality ECG 1" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
                 <div style={{ textAlign: "center", fontSize: 12, fontWeight: 600, color: T.textSecondary, marginTop: 10, marginBottom: 4 }}>Example 1: Clear Lines & Grid</div>
               </div>
               
               <div style={{ background: T.inputBg, borderRadius: 12, padding: 8, border: `1px solid ${T.divider}` }}>
                 <div style={{ width: "100%", height: 160, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <img src="public/assets/ECG-1005.png" alt="Good Quality ECG 2" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src="/assets/ECG-1005.png" alt="Good Quality ECG 2" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
                 <div style={{ textAlign: "center", fontSize: 12, fontWeight: 600, color: T.textSecondary, marginTop: 10, marginBottom: 4 }}>Example 2: Well-Lit & Aligned</div>
               </div>
