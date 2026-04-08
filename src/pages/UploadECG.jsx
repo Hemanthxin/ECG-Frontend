@@ -284,11 +284,32 @@ export default function UploadECG() {
 
   return (
     <div style={{ fontFamily:"'DM Sans',sans-serif", background:T.pageBg, minHeight:"100vh", padding:"clamp(16px, 4vw, 32px)", width: "100%", boxSizing: "border-box", overflowX: "hidden" }}>
+      
+      {/* Updated CSS Animations for the Advanced Loader */}
       <style>{`
         @keyframes ecgpulse { 0%,100% { opacity:1 } 50% { opacity:.35 } } 
         @keyframes ecgspin { to { transform:rotate(360deg) } }
-        @keyframes ecgDraw { 0% { stroke-dashoffset: 600; } 100% { stroke-dashoffset: 0; } }
-        @keyframes ecgFadePulse { 0%, 100% { opacity: 0.6; transform: scale(0.98); } 50% { opacity: 1; transform: scale(1.02); } }
+        
+        /* Advanced Loader Keyframes */
+        @keyframes ecgDrawAdv {
+          0% { stroke-dashoffset: 600; }
+          50% { stroke-dashoffset: 0; }
+          100% { stroke-dashoffset: -600; }
+        }
+        @keyframes radarSweep {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes hudPulse {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.05); }
+        }
+        @keyframes scanLine {
+          0% { transform: translateX(-40px); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: translateX(320px); opacity: 0; }
+        }
       `}</style>
 
       {/* Header */}
@@ -326,32 +347,69 @@ export default function UploadECG() {
         {error && <div style={{marginTop:12,padding:"10px 14px",borderRadius:9,background:"#fef2f2",border:"1px solid #fecaca",color:"#dc2626",fontSize:12}}>⚠ {error}</div>}
       </div>
 
-      {/* Creative Professional AI Loader */}
+      {/* ── ADVANCED AI SCANNER LOADER ── */}
       {loading && (
-        <div style={{ textAlign: "center", padding: "70px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 28, background: T.cardBg, borderRadius: 16, border: `1px solid ${T.cardBorder}`, boxShadow: T.cardShadow, position: "relative", overflow: "hidden" }}>
+        <div style={{ 
+          position: "relative", padding: "60px 20px", display: "flex", flexDirection: "column", 
+          alignItems: "center", justifyContent: "center", background: "#0a0c10", 
+          borderRadius: 16, border: `1px solid ${T.accent || '#2563eb'}44`, 
+          boxShadow: `0 0 40px ${T.accent || '#2563eb'}15 inset, 0 10px 30px rgba(0,0,0,0.2)`, 
+          overflow: "hidden", marginBottom: 20
+        }}>
           
-          <div style={{ position: "relative", width: 110, height: 110, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {/* Outer spinning tech ring */}
-            <div style={{ position: "absolute", inset: 0, border: `2px dashed ${T.accent}55`, borderRadius: "50%", animation: "ecgspin 12s linear infinite" }} />
+          {/* Tech Grid Background */}
+          <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${T.accent || '#2563eb'}11 1px, transparent 1px), linear-gradient(90deg, ${T.accent || '#2563eb'}11 1px, transparent 1px)`, backgroundSize: "24px 24px", backgroundPosition: "center" }} />
+          
+          {/* Radar Sweep Background */}
+          <div style={{ position: "absolute", top: "50%", left: "50%", width: 500, height: 500, marginTop: -250, marginLeft: -250, borderRadius: "50%", background: `conic-gradient(from 0deg, transparent 70%, ${T.accent || '#2563eb'}22 100%)`, animation: "radarSweep 3s linear infinite" }} />
+          
+          {/* HUD Target Box */}
+          <div style={{ position: "relative", width: 320, height: 130, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
             
-            {/* Inner dynamic scanner ring */}
-            <div style={{ position: "absolute", inset: 14, border: `3px solid transparent`, borderTopColor: T.accent, borderRightColor: `${T.accent}88`, borderRadius: "50%", animation: "ecgspin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite" }} />
-            
-            {/* Pulsing Core */}
-            <div style={{ position: "absolute", inset: 34, background: `linear-gradient(135deg, ${T.accent}, ${T.accent}99)`, borderRadius: "50%", animation: "ecgFadePulse 2s ease-in-out infinite", boxShadow: `0 0 25px ${T.accent}66` }} />
-            
-            {/* Orbiting Data Node */}
-            <div style={{ position: "absolute", inset: -6, animation: "ecgspin 4s linear infinite" }}>
-                <div style={{ position: "absolute", top: "50%", left: 0, width: 12, height: 12, background: T.pageBg, border: `3px solid ${T.accent}`, borderRadius: "50%", transform: "translate(-50%, -50%)", boxShadow: `0 0 15px ${T.accent}88` }} />
-            </div>
+            {/* HUD Corner Brackets */}
+            <div style={{ position: "absolute", top: 0, left: 0, width: 25, height: 25, borderTop: `2px solid ${T.accent || '#2563eb'}`, borderLeft: `2px solid ${T.accent || '#2563eb'}`, animation: "hudPulse 2s infinite" }} />
+            <div style={{ position: "absolute", top: 0, right: 0, width: 25, height: 25, borderTop: `2px solid ${T.accent || '#2563eb'}`, borderRight: `2px solid ${T.accent || '#2563eb'}`, animation: "hudPulse 2s infinite 0.5s" }} />
+            <div style={{ position: "absolute", bottom: 0, left: 0, width: 25, height: 25, borderBottom: `2px solid ${T.accent || '#2563eb'}`, borderLeft: `2px solid ${T.accent || '#2563eb'}`, animation: "hudPulse 2s infinite 1s" }} />
+            <div style={{ position: "absolute", bottom: 0, right: 0, width: 25, height: 25, borderBottom: `2px solid ${T.accent || '#2563eb'}`, borderRight: `2px solid ${T.accent || '#2563eb'}`, animation: "hudPulse 2s infinite 1.5s" }} />
+
+            {/* Scanning Laser Line */}
+            <div style={{ position: "absolute", top: -10, bottom: -10, left: 0, width: 2, background: "#ffffff", boxShadow: `0 0 15px 3px ${T.accent || '#2563eb'}`, animation: "scanLine 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite", zIndex: 3 }} />
+
+            {/* Glowing Anatomical ECG Waveform */}
+            <svg width="280" height="100" viewBox="0 0 280 100" style={{ filter: `drop-shadow(0 0 8px ${T.accent || '#2563eb'})` }}>
+              {/* Animated Foreground Line */}
+              <path 
+                d="M 0 50 L 40 50 L 50 40 L 60 50 L 70 50 L 75 55 L 85 15 L 95 65 L 100 50 L 130 50 L 145 35 L 160 50 L 280 50" 
+                fill="none" 
+                stroke={T.accent || "#3b82f6"} 
+                strokeWidth="3" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                style={{ strokeDasharray: 600, strokeDashoffset: 600, animation: "ecgDrawAdv 2s ease-in-out infinite" }} 
+              />
+              {/* Faint Ghost Track for visual depth */}
+              <path 
+                d="M 0 50 L 40 50 L 50 40 L 60 50 L 70 50 L 75 55 L 85 15 L 95 65 L 100 50 L 130 50 L 145 35 L 160 50 L 280 50" 
+                fill="none" 
+                stroke={T.accent || "#3b82f6"} 
+                strokeWidth="1.5" 
+                opacity="0.15" 
+              />
+            </svg>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: T.textPrimary, letterSpacing: 0.5 }}>
-              AI Engine Active
+          {/* Telemetry Text */}
+          <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 35 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#ffffff", letterSpacing: 2, textTransform: "uppercase", textShadow: `0 0 15px ${T.accent || '#2563eb'}88` }}>
+              AI Engine Digitizing
             </div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: T.textMuted, animation: "ecgFadePulse 2s ease-in-out infinite" }}>
-              Scanning & isolating 12-lead waveforms...
+            
+            <div style={{ display: "flex", gap: 16, fontSize: 11, fontWeight: 600, color: T.accent || "#3b82f6", fontFamily: "'DM Mono', monospace", letterSpacing: 1 }}>
+              <span style={{ animation: "ecgpulse 1.5s infinite" }}>PHASE: EXTRACTION</span>
+              <span style={{ opacity: 0.4 }}>|</span>
+              <span style={{ animation: "ecgpulse 1.5s infinite 0.5s" }}>TARGET: 12-LEAD</span>
+              <span style={{ opacity: 0.4 }}>|</span>
+              <span style={{ animation: "ecgpulse 1.5s infinite 1s" }}>STATUS: NEURAL NET ACTIVE</span>
             </div>
           </div>
         </div>
