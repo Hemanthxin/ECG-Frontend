@@ -323,7 +323,32 @@ export default function UploadECG() {
             }
           </button>
         </div>
-        {error && <div style={{marginTop:12,padding:"10px 14px",borderRadius:9,background:"#fef2f2",border:"1px solid #fecaca",color:"#dc2626",fontSize:12}}>⚠ {error}</div>}
+        
+        {/* NEW PRODUCTION-LEVEL ERROR UI */}
+        {error && (
+          <div style={{ marginTop: 16, padding: "14px 18px", borderRadius: 12, background: "#fef2f2", border: "1px solid #fecaca", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 4px 14px rgba(220, 38, 38, 0.08)", transition: "all 0.3s" }}>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#dc2626" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div style={{ color: "#991b1b", fontSize: 13.5, fontWeight: 600 }}>
+              {(() => {
+                // Self-contained logic to parse the ugly proxy error string
+                let displayError = error;
+                if (typeof error === 'string') {
+                  const match = error.match(/"detail"\s*:\s*"([^"]+)"/);
+                  if (match && match[1]) {
+                    displayError = match[1];
+                  }
+                  // Capitalize the first letter for a clean look
+                  displayError = displayError.charAt(0).toUpperCase() + displayError.slice(1);
+                }
+                return displayError;
+              })()}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Unique ECG Loader Animation */}
