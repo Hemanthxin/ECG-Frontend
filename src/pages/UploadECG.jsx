@@ -288,7 +288,7 @@ export default function UploadECG() {
         @keyframes ecgpulse { 0%,100% { opacity:1 } 50% { opacity:.35 } } 
         @keyframes ecgspin { to { transform:rotate(360deg) } }
         @keyframes ecgDraw { 0% { stroke-dashoffset: 600; } 100% { stroke-dashoffset: 0; } }
-        @keyframes ecgFadePulse { 0%, 100% { opacity: 0.7; transform: scale(0.98); } 50% { opacity: 1; transform: scale(1.02); } }
+        @keyframes ecgFadePulse { 0%, 100% { opacity: 0.6; transform: scale(0.98); } 50% { opacity: 1; transform: scale(1.02); } }
       `}</style>
 
       {/* Header */}
@@ -316,7 +316,7 @@ export default function UploadECG() {
             </span>
             <input type="file" accept="image/*" style={{display:"none"}} onChange={onFile}/>
           </label>
-          <button onClick={onAnalyze} disabled={loading||!file} style={{flex: "1 1 auto", justifyContent: "center", padding:"13px 30px",borderRadius:10,border:"none",background:loading||!file?"#e5e7eb":`linear-gradient(135deg,${T.accent},${T.accentHover})`,color:loading||!file?"#9ca3af":"#fff",fontWeight:700,fontSize:13,cursor:loading||!file?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:loading||!file?"none":`0 2px 14px ${T.accent}44`,transition:"all .18s",whiteSpace:"nowrap"}}>
+          <button onClick={onAnalyze} disabled={loading||!file} style={{flex: "1 1 auto", justifyContent: "center", padding:"13px 30px",borderRadius:10,border:"none",background:loading||!file?"#e5e7eb":`linear-gradient(135deg,${T.accent},${T.accentHover||T.accent})`,color:loading||!file?"#9ca3af":"#fff",fontWeight:700,fontSize:13,cursor:loading||!file?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:loading||!file?"none":`0 2px 14px ${T.accent}44`,transition:"all .18s",whiteSpace:"nowrap"}}>
             {loading
               ? <><span style={{display:"inline-block",width:13,height:13,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"ecgspin .7s linear infinite"}}/> {t('upload_processing')}</>
               : <><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> {t('upload_analyze')}</>
@@ -326,36 +326,33 @@ export default function UploadECG() {
         {error && <div style={{marginTop:12,padding:"10px 14px",borderRadius:9,background:"#fef2f2",border:"1px solid #fecaca",color:"#dc2626",fontSize:12}}>⚠ {error}</div>}
       </div>
 
-      {/* Unique ECG Loader Animation */}
+      {/* Creative Professional AI Loader */}
       {loading && (
-        <div style={{ textAlign: "center", padding: "60px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 24, background: T.cardBg, borderRadius: 16, border: `1px solid ${T.cardBorder}`, boxShadow: T.cardShadow }}>
-          <svg width="220" height="80" viewBox="0 0 220 80" style={{ overflow: "visible", maxWidth: "100%" }}>
-            {/* Background faded track */}
-            <path
-              d="M 0 40 L 40 40 L 50 15 L 65 75 L 85 5 L 105 65 L 115 40 L 220 40"
-              fill="none"
-              stroke={T.divider || "#e5e7eb"}
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            {/* Animated glowing primary line */}
-            <path
-              d="M 0 40 L 40 40 L 50 15 L 65 75 L 85 5 L 105 65 L 115 40 L 220 40"
-              fill="none"
-              stroke={T.accent || "#2563eb"}
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{
-                strokeDasharray: 600,
-                strokeDashoffset: 600,
-                animation: "ecgDraw 2.5s ease-in-out infinite"
-              }}
-            />
-          </svg>
-          <div style={{ fontSize: 16, fontWeight: 700, color: T.accent || "#2563eb", animation: "ecgFadePulse 1.5s ease-in-out infinite", letterSpacing: 0.5 }}>
-            Digitizing 12-Lead ECG...
+        <div style={{ textAlign: "center", padding: "70px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 28, background: T.cardBg, borderRadius: 16, border: `1px solid ${T.cardBorder}`, boxShadow: T.cardShadow, position: "relative", overflow: "hidden" }}>
+          
+          <div style={{ position: "relative", width: 110, height: 110, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {/* Outer spinning tech ring */}
+            <div style={{ position: "absolute", inset: 0, border: `2px dashed ${T.accent}55`, borderRadius: "50%", animation: "ecgspin 12s linear infinite" }} />
+            
+            {/* Inner dynamic scanner ring */}
+            <div style={{ position: "absolute", inset: 14, border: `3px solid transparent`, borderTopColor: T.accent, borderRightColor: `${T.accent}88`, borderRadius: "50%", animation: "ecgspin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite" }} />
+            
+            {/* Pulsing Core */}
+            <div style={{ position: "absolute", inset: 34, background: `linear-gradient(135deg, ${T.accent}, ${T.accent}99)`, borderRadius: "50%", animation: "ecgFadePulse 2s ease-in-out infinite", boxShadow: `0 0 25px ${T.accent}66` }} />
+            
+            {/* Orbiting Data Node */}
+            <div style={{ position: "absolute", inset: -6, animation: "ecgspin 4s linear infinite" }}>
+                <div style={{ position: "absolute", top: "50%", left: 0, width: 12, height: 12, background: T.pageBg, border: `3px solid ${T.accent}`, borderRadius: "50%", transform: "translate(-50%, -50%)", boxShadow: `0 0 15px ${T.accent}88` }} />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: T.textPrimary, letterSpacing: 0.5 }}>
+              AI Engine Active
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: T.textMuted, animation: "ecgFadePulse 2s ease-in-out infinite" }}>
+              Scanning & isolating 12-lead waveforms...
+            </div>
           </div>
         </div>
       )}
@@ -383,8 +380,8 @@ export default function UploadECG() {
             {TABS.map(tb=>(
               <button key={tb.key} onClick={()=>setTab(tb.key)} style={{
                 ...tabBase,
-                background: tab===tb.key ? `linear-gradient(135deg,${T.accent},${T.accentHover})` : "transparent",
-                color: tab===tb.key ? T.accentText : T.textMuted,
+                background: tab===tb.key ? `linear-gradient(135deg,${T.accent},${T.accentHover||T.accent})` : "transparent",
+                color: tab===tb.key ? T.accentText || "#fff" : T.textMuted,
                 boxShadow: tab===tb.key ? `0 2px 8px ${T.accent}44` : "none",
               }}>{tb.label}</button>
             ))}
