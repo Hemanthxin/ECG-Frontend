@@ -177,6 +177,7 @@ export default function UploadECG() {
   const [tab,setTab]           = useState("medical");
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   const [showQualityModal, setShowQualityModal] = useState(false); 
+  const [selectedExampleImage, setSelectedExampleImage] = useState(null); // NEW STATE FOR LARGE IMAGE
 
   const TABS = [
     {key:"original", label:t('tab_original')},
@@ -544,17 +545,24 @@ export default function UploadECG() {
             
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20 }}>
               
-              {/* FIXED: Replaced objectFit: "cover" with "contain" and increased container height */}
               <div style={{ background: T.inputBg, borderRadius: 12, padding: 12, border: `1px solid ${T.divider}` }}>
-                <div style={{ width: "100%", height: 180, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #f1f5f9" }}>
-                  <img src="/norm.png" alt="Colored ECG Image" style={{ width: "100%", height: "100%", objectFit: "contain", padding: "8px" }} />
+                {/* NEW WRAPPER WITH CLICK HANDLER & CURSOR */}
+                <div 
+                  onClick={() => setSelectedExampleImage('/assets/ECG-1028.png')}
+                  style={{ width: "100%", height: 180, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #f1f5f9", cursor: "pointer" }}
+                >
+                  <img src="/assets/ECG-1028.png" alt="Colored ECG Image" style={{ width: "100%", height: "100%", objectFit: "contain", padding: "8px" }} />
                 </div>
                 <div style={{ textAlign: "center", fontSize: 13, fontWeight: 600, color: T.textSecondary, marginTop: 12, marginBottom: 4 }}>Example 1: Colored ECG Image</div>
               </div>
               
               <div style={{ background: T.inputBg, borderRadius: 12, padding: 12, border: `1px solid ${T.divider}` }}>
-                <div style={{ width: "100%", height: 180, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #f1f5f9" }}>
-                  <img src="/normal+ECG.webp" alt="B&W ECG Image" style={{ width: "100%", height: "100%", objectFit: "contain", padding: "8px" }} />
+                {/* NEW WRAPPER WITH CLICK HANDLER & CURSOR */}
+                <div 
+                  onClick={() => setSelectedExampleImage('/assets/ECG-1005.png')}
+                  style={{ width: "100%", height: 180, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #f1f5f9", cursor: "pointer" }}
+                >
+                  <img src="/assets/ECG-1005.png" alt="B&W ECG Image" style={{ width: "100%", height: "100%", objectFit: "contain", padding: "8px" }} />
                 </div>
                 <div style={{ textAlign: "center", fontSize: 13, fontWeight: 600, color: T.textSecondary, marginTop: 12, marginBottom: 4 }}>Example 2: B&W ECG Image</div>
               </div>
@@ -572,6 +580,34 @@ export default function UploadECG() {
           </div>
         </div>
       )}
+
+      {/* NEW LARGE IMAGE VIEWER MODAL */}
+      {selectedExampleImage && (
+        <div 
+          onClick={() => setSelectedExampleImage(null)} // Click on backdrop to close
+          style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15, 23, 42, 0.8)", backdropFilter: "blur(6px)", zIndex: 10000, display: "flex", justifyContent: "center", alignItems: "center", padding: "40px", animation: "backdropFadeIn 0.2s ease-out" }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on image
+            style={{ position: "relative", maxWidth: "90%", maxHeight: "90%", background: "#fff", padding: "12px", borderRadius: "12px", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.3)", animation: "modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)" }}
+          >
+            <img 
+              src={selectedExampleImage} 
+              alt="Large ECG Example" 
+              style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", borderRadius: "8px" }} 
+            />
+            <button 
+              onClick={() => setSelectedExampleImage(null)} 
+              style={{ position: "absolute", top: -20, right: -20, background: T.inputBg, border: `1px solid ${T.divider}`, borderRadius: "50%", width: 40, height: 40, display: "flex", justifyContent: "center", alignItems: "center", cursor: "pointer", color: T.textMuted, transition: "all 0.2s", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}
+              onMouseOver={(e) => { e.currentTarget.style.background = "#f1f5f9"; e.currentTarget.style.color = "#0f172a"; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = T.inputBg; e.currentTarget.style.color = T.textMuted; }}
+            >
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
