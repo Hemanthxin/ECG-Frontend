@@ -540,20 +540,20 @@ export default function UploadECG() {
             </div>
             
             <p style={{ color: T.textMuted, fontSize: 14.5, lineHeight: 1.6, marginBottom: 28 }}>
-              Please upload images of at least this quality so the AI can detect and digitize the signals properly. Make sure the background grid is clearly visible, evenly lit, and not blurry.
+              Please upload images of at least this quality so the AI can detect and digitize the signals properly. Make sure image is clearly visible and not blurry.
             </p>
             
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20 }}>
               <div style={{ background: T.inputBg, borderRadius: 12, padding: 8, border: `1px solid ${T.divider}` }}>
                 <div style={{ width: "100%", height: 160, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <img src="https://via.placeholder.com/400x300/fce8e8/dc2626?text=Good+Quality+ECG+Example+1" alt="Good Quality ECG 1" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src="public/assets/ECG-1028.png" alt="Good Quality ECG 1" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
                 <div style={{ textAlign: "center", fontSize: 12, fontWeight: 600, color: T.textSecondary, marginTop: 10, marginBottom: 4 }}>Example 1: Clear Lines & Grid</div>
               </div>
               
               <div style={{ background: T.inputBg, borderRadius: 12, padding: 8, border: `1px solid ${T.divider}` }}>
                 <div style={{ width: "100%", height: 160, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <img src="https://via.placeholder.com/400x300/fce8e8/dc2626?text=Good+Quality+ECG+Example+2" alt="Good Quality ECG 2" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src="public/assets/ECG-1005.png" alt="Good Quality ECG 2" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
                 <div style={{ textAlign: "center", fontSize: 12, fontWeight: 600, color: T.textSecondary, marginTop: 10, marginBottom: 4 }}>Example 2: Well-Lit & Aligned</div>
               </div>
