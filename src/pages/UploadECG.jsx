@@ -351,7 +351,7 @@ export default function UploadECG() {
       {loading && (
         <div style={{ 
           position: "relative", padding: "60px 20px", display: "flex", flexDirection: "column", 
-          alignItems: "center", justifyContent: "center", background: "#0a0c10", 
+          alignItems: "center", justifyContent: "center", background: "#f5f6f8", 
           borderRadius: 16, border: `1px solid ${T.accent || '#2563eb'}44`, 
           boxShadow: `0 0 40px ${T.accent || '#2563eb'}15 inset, 0 10px 30px rgba(0,0,0,0.2)`, 
           overflow: "hidden", marginBottom: 20
