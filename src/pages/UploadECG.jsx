@@ -176,7 +176,7 @@ export default function UploadECG() {
   const [selLead,setSelLead]   = useState(null);
   const [tab,setTab]           = useState("medical");
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
-  const [showQualityModal, setShowQualityModal] = useState(false); // NEW STATE FOR MODAL
+  const [showQualityModal, setShowQualityModal] = useState(false); 
 
   const TABS = [
     {key:"original", label:t('tab_original')},
@@ -294,7 +294,6 @@ export default function UploadECG() {
 
       {/* Upload card */}
       <div style={card}>
-        {/* MODIFIED: Added Info Icon to the title */}
         <div style={{ ...cardTtl, display: "flex", alignItems: "center", gap: 6 }}>
           {t('upload_select')}
           <button 
@@ -544,19 +543,22 @@ export default function UploadECG() {
             </p>
             
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20 }}>
-              <div style={{ background: T.inputBg, borderRadius: 12, padding: 8, border: `1px solid ${T.divider}` }}>
-                <div style={{ width: "100%", height: 160, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <img src="/assets/ECG-1028.png" alt="Good Quality ECG 1" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              
+              {/* FIXED: Replaced objectFit: "cover" with "contain" and increased container height */}
+              <div style={{ background: T.inputBg, borderRadius: 12, padding: 12, border: `1px solid ${T.divider}` }}>
+                <div style={{ width: "100%", height: 180, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #f1f5f9" }}>
+                  <img src="/norm.png" alt="Colored ECG Image" style={{ width: "100%", height: "100%", objectFit: "contain", padding: "8px" }} />
                 </div>
-                <div style={{ textAlign: "center", fontSize: 12, fontWeight: 600, color: T.textSecondary, marginTop: 10, marginBottom: 4 }}>Example 1: Colored ECG Image</div>
+                <div style={{ textAlign: "center", fontSize: 13, fontWeight: 600, color: T.textSecondary, marginTop: 12, marginBottom: 4 }}>Example 1: Colored ECG Image</div>
               </div>
               
-              <div style={{ background: T.inputBg, borderRadius: 12, padding: 8, border: `1px solid ${T.divider}` }}>
-                <div style={{ width: "100%", height: 160, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <img src="/assets/ECG-1005.png" alt="Good Quality ECG 2" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <div style={{ background: T.inputBg, borderRadius: 12, padding: 12, border: `1px solid ${T.divider}` }}>
+                <div style={{ width: "100%", height: 180, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #f1f5f9" }}>
+                  <img src="/normal+ECG.webp" alt="B&W ECG Image" style={{ width: "100%", height: "100%", objectFit: "contain", padding: "8px" }} />
                 </div>
-                <div style={{ textAlign: "center", fontSize: 12, fontWeight: 600, color: T.textSecondary, marginTop: 10, marginBottom: 4 }}>Example 2: B&W ECG Image</div>
+                <div style={{ textAlign: "center", fontSize: 13, fontWeight: 600, color: T.textSecondary, marginTop: 12, marginBottom: 4 }}>Example 2: B&W ECG Image</div>
               </div>
+              
             </div>
             
             <div style={{ marginTop: 28, display: "flex", justifyContent: "flex-end" }}>
