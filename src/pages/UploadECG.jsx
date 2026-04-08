@@ -513,7 +513,7 @@ export default function UploadECG() {
         </div>
       )}
 
-      {/* IMAGE QUALITY MODAL (Responsive & Scrollable) */}
+      {/* IMAGE QUALITY MODAL */}
       {showQualityModal && (
         <div 
           onClick={() => setShowQualityModal(false)}
@@ -579,11 +579,16 @@ export default function UploadECG() {
         </div>
       )}
 
-      {/* LARGE SCROLLABLE IMAGE VIEWER */}
+      {/* FULLY SCROLLABLE LARGE IMAGE VIEWER */}
       {selectedExampleImage && (
         <div 
           onClick={() => setSelectedExampleImage(null)} 
-          style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15, 23, 42, 0.8)", backdropFilter: "blur(6px)", zIndex: 10000, display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "clamp(20px, 5vw, 60px) 20px", overflowY: "auto", animation: "backdropFadeIn 0.2s ease-out" }}
+          style={{ 
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0, 
+            backgroundColor: "rgba(15, 23, 42, 0.8)", backdropFilter: "blur(6px)", 
+            zIndex: 10000, overflowY: "auto", padding: "40px 20px", 
+            animation: "backdropFadeIn 0.2s ease-out" 
+          }}
         >
           {/* Floating Action Button - Always visible top right */}
           <button 
@@ -597,7 +602,12 @@ export default function UploadECG() {
 
           <div 
             onClick={(e) => e.stopPropagation()} 
-            style={{ position: "relative", width: "100%", maxWidth: "1200px", background: "#fff", padding: "12px", borderRadius: "12px", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.3)", margin: "auto", animation: "modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)" }}
+            style={{ 
+              position: "relative", width: "100%", maxWidth: "1200px", margin: "0 auto", 
+              background: "#fff", padding: "12px", borderRadius: "12px", 
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.3)", 
+              animation: "modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)" 
+            }}
           >
             <img 
               src={selectedExampleImage} 
