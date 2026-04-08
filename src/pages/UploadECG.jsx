@@ -152,7 +152,6 @@ function MedicalECG({ signals, leadList, recordId }) {
     return ()=>ro.disconnect();
   },[draw]);
 
-  // Added id="medical-ecg-canvas" for PDF extraction
   return <div ref={wrapRef} style={{width:"100%", maxWidth: "100%", overflow: "hidden"}}><canvas id="medical-ecg-canvas" ref={canvasRef} style={{display:"block",width:"100%"}}/></div>;
 }
 
@@ -177,12 +176,13 @@ export default function UploadECG() {
   const [selLead,setSelLead]   = useState(null);
   const [tab,setTab]           = useState("medical");
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [showQualityModal, setShowQualityModal] = useState(false); // NEW STATE FOR MODAL
 
   const TABS = [
     {key:"original", label:t('tab_original')},
     {key:"overlay",  label:t('tab_overlay')},
     {key:"leads",    label:t('tab_leads')},
-    {key:"medical",  label:"Output Image"}, // Renamed from Medical ECG
+    {key:"medical",  label:"Output Image"},
   ];
 
   const recordId = file ? (file.name.replace(/\.[^.]+$/,"").replace(/[^0-9]/g,"")||file.name.replace(/\.[^.]+$/,"")) : "";
@@ -212,19 +212,15 @@ export default function UploadECG() {
   const handleDownloadPDF = async () => {
     try {
       setIsPdfGenerating(true);
-      // Dynamically import to prevent SSR/build issues if any
       const { jsPDF } = await import("jspdf");
-      
-      const doc = new jsPDF("landscape", "mm", "a4"); // A4 Landscape: 297 x 210 mm
+      const doc = new jsPDF("landscape", "mm", "a4");
       const pageWidth = doc.internal.pageSize.getWidth();
       
-      // Document Header
       doc.setFont("helvetica", "bold");
       doc.setFontSize(18);
       doc.setTextColor(31, 41, 55);
       doc.text("Automated 12-Lead ECG Analysis Report", 14, 20);
 
-      // Meta Info
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
       doc.setTextColor(107, 114, 128);
@@ -238,36 +234,27 @@ export default function UploadECG() {
       doc.text(`Leads Detected: ${result.lead_list?.length || 0}`, 130, 30);
       doc.text(`Computed Duration: ${durationText}`, 130, 36);
 
-      // Divider Line
       doc.setDrawColor(229, 231, 235);
       doc.setLineWidth(0.5);
       doc.line(14, 42, pageWidth - 14, 42);
 
-      // Get the rendered Canvas image
       const canvas = document.getElementById("medical-ecg-canvas");
       if (canvas) {
-        // High quality extraction
         const imgData = canvas.toDataURL("image/png", 1.0);
-        
-        // Calculate proportional dimensions fitting the A4 page
         const margin = 14;
         const maxPdfWidth = pageWidth - (margin * 2); 
         const canvasRatio = canvas.width / canvas.height;
         const pdfHeight = maxPdfWidth / canvasRatio;
-
-        // Add to document
         doc.addImage(imgData, "PNG", margin, 48, maxPdfWidth, pdfHeight);
       } else {
         doc.setTextColor(220, 38, 38);
         doc.text("Warning: Graphical ECG grid could not be captured.", 14, 55);
       }
 
-      // Footer
       doc.setFontSize(9);
       doc.setTextColor(156, 163, 175);
       doc.text("Generated securely by ECG AI System.", 14, doc.internal.pageSize.getHeight() - 10);
 
-      // Save
       doc.save(`ECG_Report_${recordId || 'analysis'}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
@@ -283,12 +270,14 @@ export default function UploadECG() {
   const tabBase = { flex: "1 1 auto", textAlign: "center", padding:"8px 18px", borderRadius:9, border:"none", cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"'DM Sans',sans-serif", transition:"all .15s" };
 
   return (
-    <div style={{ fontFamily:"'DM Sans',sans-serif", background:T.pageBg, minHeight:"100vh", padding:"clamp(16px, 4vw, 32px)", width: "100%", boxSizing: "border-box", overflowX: "hidden" }}>
+    <div style={{ fontFamily:"'DM Sans',sans-serif", background:T.pageBg, minHeight:"100vh", padding:"clamp(16px, 4vw, 32px)", width: "100%", boxSizing: "border-box", overflowX: "hidden", position: "relative" }}>
       <style>{`
         @keyframes ecgpulse { 0%,100% { opacity:1 } 50% { opacity:.35 } } 
         @keyframes ecgspin { to { transform:rotate(360deg) } }
         @keyframes ecgDraw { 0% { stroke-dashoffset: 600px; } 100% { stroke-dashoffset: 0px; } }
         @keyframes ecgFadePulse { 0%, 100% { opacity: 0.7; transform: scale(0.98); } 50% { opacity: 1; transform: scale(1.02); } }
+        @keyframes modalFadeIn { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes backdropFadeIn { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
 
       {/* Header */}
@@ -305,7 +294,21 @@ export default function UploadECG() {
 
       {/* Upload card */}
       <div style={card}>
-        <div style={cardTtl}>{t('upload_select')}</div>
+        {/* MODIFIED: Added Info Icon to the title */}
+        <div style={{ ...cardTtl, display: "flex", alignItems: "center", gap: 6 }}>
+          {t('upload_select')}
+          <button 
+            onClick={() => setShowQualityModal(true)} 
+            style={{ background: "none", border: "none", padding: 0, margin: 0, display: "flex", alignItems: "center", cursor: "pointer", outline: "none" }}
+            title="Image Quality Guidelines"
+          >
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke={T.textMuted} strokeWidth="2.5" style={{ transition: "stroke 0.2s" }} onMouseOver={(e) => e.currentTarget.style.stroke = T.accent} onMouseOut={(e) => e.currentTarget.style.stroke = T.textMuted}>
+              <circle cx="12" cy="12" r="10"></circle>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01"></path>
+            </svg>
+          </button>
+        </div>
+        
         <div style={{display:"flex",gap:12,alignItems:"stretch",flexWrap:"wrap"}}>
           <label style={{flex:1,minWidth:200,border:`1.5px dashed ${file?T.accent:T.cardBorder}`,borderRadius:10,padding:"13px 18px",cursor:"pointer",fontSize:13,color:file?T.accent:T.textMuted,display:"flex",alignItems:"center",gap:9,background:file?`${T.accent}0e`:T.inputBg,fontWeight:file?500:400,transition:"all .18s"}}>
             <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -324,7 +327,6 @@ export default function UploadECG() {
           </button>
         </div>
         
-        {/* NEW PRODUCTION-LEVEL ERROR UI */}
         {error && (
           <div style={{ marginTop: 16, padding: "14px 18px", borderRadius: 12, background: "#fef2f2", border: "1px solid #fecaca", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 4px 14px rgba(220, 38, 38, 0.08)", transition: "all 0.3s" }}>
             <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -334,14 +336,12 @@ export default function UploadECG() {
             </div>
             <div style={{ color: "#991b1b", fontSize: 13.5, fontWeight: 600 }}>
               {(() => {
-                // Self-contained logic to parse the ugly proxy error string
                 let displayError = error;
                 if (typeof error === 'string') {
                   const match = error.match(/"detail"\s*:\s*"([^"]+)"/);
                   if (match && match[1]) {
                     displayError = match[1];
                   }
-                  // Capitalize the first letter for a clean look
                   displayError = displayError.charAt(0).toUpperCase() + displayError.slice(1);
                 }
                 return displayError;
@@ -355,29 +355,8 @@ export default function UploadECG() {
       {loading && (
         <div style={{ textAlign: "center", padding: "60px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 24, background: T.cardBg, borderRadius: 16, border: `1px solid ${T.cardBorder}`, boxShadow: T.cardShadow }}>
           <svg width="220" height="80" viewBox="0 0 220 80" style={{ overflow: "visible", maxWidth: "100%" }}>
-            {/* Background faded track */}
-            <path
-              d="M 0 40 L 40 40 L 50 15 L 65 75 L 85 5 L 105 65 L 115 40 L 220 40"
-              fill="none"
-              stroke={T.divider || "#e5e7eb"}
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            {/* Animated glowing primary line */}
-            <path
-              d="M 0 40 L 40 40 L 50 15 L 65 75 L 85 5 L 105 65 L 115 40 L 220 40"
-              fill="none"
-              stroke={T.accent || "#2563eb"}
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{
-                strokeDasharray: "600px",
-                strokeDashoffset: "600px",
-                animation: "ecgDraw 2.5s ease-in-out infinite"
-              }}
-            />
+            <path d="M 0 40 L 40 40 L 50 15 L 65 75 L 85 5 L 105 65 L 115 40 L 220 40" fill="none" stroke={T.divider || "#e5e7eb"} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M 0 40 L 40 40 L 50 15 L 65 75 L 85 5 L 105 65 L 115 40 L 220 40" fill="none" stroke={T.accent || "#2563eb"} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{ strokeDasharray: "600px", strokeDashoffset: "600px", animation: "ecgDraw 2.5s ease-in-out infinite" }} />
           </svg>
           <div style={{ fontSize: 16, fontWeight: 700, color: T.accent || "#2563eb", animation: "ecgFadePulse 1.5s ease-in-out infinite", letterSpacing: 0.5 }}>
             Digitizing 12-Lead ECG...
@@ -420,26 +399,10 @@ export default function UploadECG() {
             <div>
               <div style={{fontSize:11,fontWeight:700,color:T.textMuted,letterSpacing:1,textTransform:"uppercase",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
                 Output Image — Full 12-Lead ECG <div style={{flex:1,height:1,background:T.headingLine}}/>
-                
-                {/* PDF Download Button added here seamlessly */}
                 <button 
                   onClick={handleDownloadPDF} 
                   disabled={isPdfGenerating}
-                  style={{
-                    padding: "7px 14px", 
-                    background: isPdfGenerating ? "#9ca3af" : T.accent, 
-                    color: "#fff", 
-                    border: "none", 
-                    borderRadius: 8, 
-                    fontSize: 11, 
-                    fontWeight: 700, 
-                    cursor: isPdfGenerating ? "wait" : "pointer", 
-                    display: "flex", 
-                    alignItems: "center", 
-                    gap: 6,
-                    boxShadow: isPdfGenerating ? "none" : `0 2px 10px ${T.accent}33`,
-                    transition: "all 0.2s"
-                  }}
+                  style={{ padding: "7px 14px", background: isPdfGenerating ? "#9ca3af" : T.accent, color: "#fff", border: "none", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: isPdfGenerating ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 6, boxShadow: isPdfGenerating ? "none" : `0 2px 10px ${T.accent}33`, transition: "all 0.2s" }}
                 >
                   <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -547,6 +510,64 @@ export default function UploadECG() {
           <div style={{fontSize:52,marginBottom:16}}>🫀</div>
           <h3 style={{fontSize:16,fontWeight:600,color:T.textPrimary,marginBottom:6}}>{t('upload_empty_h')}</h3>
           <p style={{fontSize:13}}>{t('upload_empty_p')}</p>
+        </div>
+      )}
+
+      {/* NEW IMAGE QUALITY MODAL */}
+      {showQualityModal && (
+        <div 
+          onClick={() => setShowQualityModal(false)}
+          style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15, 23, 42, 0.65)", backdropFilter: "blur(4px)", zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "center", padding: "20px", animation: "backdropFadeIn 0.2s ease-out" }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ background: T.cardBg, borderRadius: 20, padding: 32, maxWidth: 680, width: "100%", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", position: "relative", animation: "modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)" }}
+          >
+            <button 
+              onClick={() => setShowQualityModal(false)} 
+              style={{ position: "absolute", top: 20, right: 20, background: T.inputBg, border: `1px solid ${T.divider}`, borderRadius: "50%", width: 32, height: 32, display: "flex", justifyContent: "center", alignItems: "center", cursor: "pointer", color: T.textMuted, transition: "all 0.2s" }}
+              onMouseOver={(e) => { e.currentTarget.style.background = "#f1f5f9"; e.currentTarget.style.color = "#0f172a"; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = T.inputBg; e.currentTarget.style.color = T.textMuted; }}
+            >
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+              <div style={{ background: `${T.accent}15`, padding: 8, borderRadius: 10, color: T.accent }}>
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              </div>
+              <h2 style={{ margin: 0, color: T.textPrimary, fontSize: 20, fontWeight: 700 }}>Image Quality Guidelines</h2>
+            </div>
+            
+            <p style={{ color: T.textMuted, fontSize: 14.5, lineHeight: 1.6, marginBottom: 28 }}>
+              Please upload images of at least this quality so the AI can detect and digitize the signals properly. Make sure the background grid is clearly visible, evenly lit, and not blurry.
+            </p>
+            
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20 }}>
+              <div style={{ background: T.inputBg, borderRadius: 12, padding: 8, border: `1px solid ${T.divider}` }}>
+                <div style={{ width: "100%", height: 160, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <img src="https://via.placeholder.com/400x300/fce8e8/dc2626?text=Good+Quality+ECG+Example+1" alt="Good Quality ECG 1" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+                <div style={{ textAlign: "center", fontSize: 12, fontWeight: 600, color: T.textSecondary, marginTop: 10, marginBottom: 4 }}>Example 1: Clear Lines & Grid</div>
+              </div>
+              
+              <div style={{ background: T.inputBg, borderRadius: 12, padding: 8, border: `1px solid ${T.divider}` }}>
+                <div style={{ width: "100%", height: 160, borderRadius: 8, overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <img src="https://via.placeholder.com/400x300/fce8e8/dc2626?text=Good+Quality+ECG+Example+2" alt="Good Quality ECG 2" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+                <div style={{ textAlign: "center", fontSize: 12, fontWeight: 600, color: T.textSecondary, marginTop: 10, marginBottom: 4 }}>Example 2: Well-Lit & Aligned</div>
+              </div>
+            </div>
+            
+            <div style={{ marginTop: 28, display: "flex", justifyContent: "flex-end" }}>
+              <button 
+                onClick={() => setShowQualityModal(false)}
+                style={{ background: T.accent, color: "#fff", border: "none", padding: "10px 24px", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: "pointer", boxShadow: `0 4px 12px ${T.accent}40`, transition: "all 0.2s" }}
+              >
+                Got it
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
