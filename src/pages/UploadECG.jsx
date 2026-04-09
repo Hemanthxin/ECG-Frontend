@@ -209,11 +209,12 @@ export default function UploadECG() {
   const [showQualityModal, setShowQualityModal] = useState(false);
   const [selectedExampleImage, setSelectedExampleImage] = useState(null);
 
-  // 7 tabs now
+  // 8 tabs now
   const TABS = [
     {key:"original",    label: t('tab_original')         || "Original"},
     {key:"grid_crop",   label: "Grid Region"},
     {key:"detections",  label: "YOLO Detections"},
+    {key:"masks",       label: "Masked Leads"},
     {key:"overlay",     label: t('tab_overlay')          || "13-Lead Overlay"},
     {key:"leads",       label: t('tab_leads')            || "All Leads"},
     {key:"medical",     label: "Output Image"},
@@ -503,6 +504,24 @@ export default function UploadECG() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* ── nnUNet Masks ── */}
+          {tab==="masks" && (
+            <div style={{animation:"slideIn .2s ease"}}>
+              <div style={{fontSize:11,fontWeight:700,color:T.textMuted,letterSpacing:1,textTransform:"uppercase",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
+                Step 4 — nnUNet Mask Extractions <div style={{flex:1,height:1,background:T.headingLine}}/>
+              </div>
+              {result.lead_masks_b64 && Object.keys(result.lead_masks_b64).length > 0 ? (
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:14}}>
+                  {ALL13.filter(l => result.lead_masks_b64[l]).map(l => (
+                    <DebugImage key={l} src={result.lead_masks_b64[l]} label={`Lead ${l} Mask`} T={T} />
+                  ))}
+                </div>
+              ) : (
+                <div style={{padding:20,textAlign:"center",color:T.textMuted}}>No mask visualizations available.</div>
+              )}
             </div>
           )}
 
