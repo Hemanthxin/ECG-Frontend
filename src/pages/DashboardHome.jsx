@@ -21,7 +21,7 @@ export default function DashboardHome() {
     if (!user?.email) { setLoading(false); return; }
     setLoading(true); setError('');
     try {
-      const res  = await fetch(`https://ecg-backend-production-af9b.up.railway.app/api/scan-history?email=${encodeURIComponent(user.email)}`);
+      const res  = await fetch(`https://ecg-backend-60i9.onrender.com/api/scan-history?email=${encodeURIComponent(user.email)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Failed to load');
       setScanData(data);
