@@ -6,7 +6,7 @@ import { useResponsive } from '../hooks/useresponsive';
 import { useNavigate }   from 'react-router-dom';
 import { User, Mail, Phone, Calendar, Venus, Edit2, Save, X, Camera, Lock, Eye, EyeOff, Trash2, AlertTriangle, Check, Upload } from 'lucide-react';
 
-const API = 'https://ecg-backend-production-af9b.up.railway.app';
+const API = 'https://ecg-backend-60i9.onrender.com';
 
 function ChangePasswordModal({ email, onClose, T, t }) {
   const [current,setCurrent]=useState(''); const [next,setNext]=useState(''); const [confirm,setConfirm]=useState('');

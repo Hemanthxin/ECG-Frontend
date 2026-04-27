@@ -35,7 +35,7 @@ export default function UserInfo() {
 
     try {
 
-      const response = await fetch("https://ecg-backend-production-af9b.up.railway.app/api/update-profile", {
+      const response = await fetch("https://ecg-backend-60i9.onrender.com/api/update-profile", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

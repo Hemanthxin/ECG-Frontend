@@ -233,7 +233,7 @@ export default function UploadECG() {
     setLoading(true); setError(null); setResult(null);
     const fd=new FormData();
     fd.append("file", file);
-    const url = `https://ecg-backend-production-af9b.up.railway.app/api/upload-ecg${user?.email ? `?email=${encodeURIComponent(user.email)}` : ""}`;
+    const url = `https://ecg-backend-60i9.onrender.com/api/upload-ecg${user?.email ? `?email=${encodeURIComponent(user.email)}` : ""}`;
     try {
       const res  = await fetch(url, {method:"POST", body:fd});
       const json = await res.json();

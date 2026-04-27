@@ -42,7 +42,7 @@ export default function LoginSignup() {
       : { full_name: fullName, email, password };
 
     try {
-      const response = await fetch(`https://ecg-backend-production-af9b.up.railway.app${endpoint}`, {
+      const response = await fetch(`https://ecg-backend-60i9.onrender.com${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -86,7 +86,7 @@ export default function LoginSignup() {
     setSuccessMessage('');
 
     try {
-      const response = await fetch(`https://ecg-backend-production-af9b.up.railway.app/api/google-login`, {
+      const response = await fetch(`https://ecg-backend-60i9.onrender.com/api/google-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: credentialResponse.credential }),
