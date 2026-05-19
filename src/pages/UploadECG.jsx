@@ -19,6 +19,10 @@ function downsample(arr, max) {
 function getSig(signals, lead) {
   const s = signals?.[lead]; return s?.length ? s : new Array(2500).fill(0);
 }
+const IMAGE_EXTS = new Set(["jpg","jpeg","png","bmp","tif","tiff","webp"]);
+function isImageFile(f) {
+  return IMAGE_EXTS.has((f.name.split(".").pop()||"").toLowerCase());
+}
 
 /* ─── Sparkline ───────────────────────────────────────────────────────────── */
 function Sparkline({ data, color="#2563eb", height=64, bgColor="#f9fafb" }) {
@@ -62,7 +66,7 @@ function OverlaySpark({ data }) {
 }
 
 /* ─── Medical ECG Canvas ──────────────────────────────────────────────────── */
-function MedicalECG({ signals, leadList, recordId }) {
+function MedicalECG({ signals, leadList, recordId, canvasId }) {
   const wrapRef   = useRef(null);
   const canvasRef = useRef(null);
   const ROWS = [
@@ -152,7 +156,7 @@ function MedicalECG({ signals, leadList, recordId }) {
     return ()=>ro.disconnect();
   },[draw]);
 
-  return <div ref={wrapRef} style={{width:"100%",maxWidth:"100%",overflow:"hidden"}}><canvas id="medical-ecg-canvas" ref={canvasRef} style={{display:"block",width:"100%"}}/></div>;
+  return <div ref={wrapRef} style={{width:"100%",maxWidth:"100%",overflow:"hidden"}}><canvas id={canvasId || "medical-ecg-canvas"} ref={canvasRef} style={{display:"block",width:"100%"}}/></div>;
 }
 
 /* ─── Debug image viewer ──────────────────────────────────────────────────── */
@@ -198,6 +202,7 @@ export default function UploadECG() {
   const { theme: T } = useTheme();
   const { t }        = useLanguage();
 
+  /* ── Single-image state (unchanged) ── */
   const [file,setFile]         = useState(null);
   const [previewUrl,setPreview] = useState(null);
   const [result,setResult]     = useState(null);
@@ -209,7 +214,19 @@ export default function UploadECG() {
   const [showQualityModal, setShowQualityModal] = useState(false);
   const [selectedExampleImage, setSelectedExampleImage] = useState(null);
 
-  // 8 tabs now
+  /* ── Batch state (NEW) ── */
+  const [batchFiles, setBatchFiles]         = useState([]);
+  const [batchResults, setBatchResults]     = useState([]);   // {name, file, previewUrl, data, error}[]
+  const [batchErrors, setBatchErrors]       = useState([]);
+  const [batchProcessing, setBatchProcessing] = useState(false);
+  const [batchProgress, setBatchProgress]   = useState({ done:0, total:0, current:"" });
+  const [batchViewIdx, setBatchViewIdx]     = useState(0);
+  const [isBatchMode, setIsBatchMode]       = useState(false);
+  const abortBatchRef = useRef(false);
+  const folderInputRef = useRef(null);
+  const multiInputRef  = useRef(null);
+
+  // 7 tabs
   const TABS = [
     {key:"original",    label: t('tab_original')         || "Original"},
     {key:"grid_crop",   label: "Grid Region"},
@@ -220,14 +237,52 @@ export default function UploadECG() {
     {key:"medical",     label: "Output Image"},
   ];
 
-  const recordId = file ? (file.name.replace(/\.[^.]+$/,"").replace(/[^0-9]/g,"")||file.name.replace(/\.[^.]+$/,"")) : "";
+  /* ── Helpers ── */
+  const getRecordId = (f) => f ? (f.name.replace(/\.[^.]+$/,"").replace(/[^0-9]/g,"")||f.name.replace(/\.[^.]+$/,"")) : "";
+  const recordId = isBatchMode
+    ? getRecordId(batchResults[batchViewIdx]?.file)
+    : getRecordId(file);
 
+  /* ── Active result (works for both single & batch) ── */
+  const activeResult  = isBatchMode ? batchResults[batchViewIdx]?.data   : result;
+  const activePreview = isBatchMode ? batchResults[batchViewIdx]?.previewUrl : previewUrl;
+  const activeFile    = isBatchMode ? batchResults[batchViewIdx]?.file   : file;
+  const activeError   = isBatchMode ? batchResults[batchViewIdx]?.error  : error;
+
+  /* ── Single file upload (unchanged behavior) ── */
   const onFile = e => {
     const f=e.target.files[0]; if(!f) return;
+    setIsBatchMode(false);
     setFile(f); setPreview(URL.createObjectURL(f));
     setResult(null); setError(null); setSelLead(null); setTab("medical");
+    // Clear batch state
+    setBatchFiles([]); setBatchResults([]); setBatchErrors([]);
   };
 
+  /* ── Batch / folder upload (NEW) ── */
+  const onBatchFiles = (fileList) => {
+    const imgs = Array.from(fileList).filter(isImageFile);
+    if (imgs.length === 0) return;
+    imgs.sort((a,b)=>a.name.localeCompare(b.name));
+
+    if (imgs.length === 1) {
+      // Single file — use original single-image flow
+      setIsBatchMode(false);
+      setFile(imgs[0]); setPreview(URL.createObjectURL(imgs[0]));
+      setResult(null); setError(null); setSelLead(null); setTab("medical");
+      setBatchFiles([]); setBatchResults([]); setBatchErrors([]);
+      return;
+    }
+
+    setIsBatchMode(true);
+    setBatchFiles(imgs);
+    setBatchResults([]); setBatchErrors([]);
+    setBatchViewIdx(0);
+    // Clear single state
+    setFile(null); setPreview(null); setResult(null); setError(null);
+  };
+
+  /* ── Single analyze (unchanged) ── */
   const onAnalyze = async () => {
     if(!file) return;
     setLoading(true); setError(null); setResult(null);
@@ -246,19 +301,139 @@ export default function UploadECG() {
     setLoading(false);
   };
 
+  /* ── Batch process (NEW) ── */
+  const onBatchAnalyze = useCallback(async () => {
+    if (batchFiles.length === 0) return;
+    setBatchProcessing(true);
+    setBatchResults([]); setBatchErrors([]);
+    abortBatchRef.current = false;
+    const total = batchFiles.length;
+    setBatchProgress({ done:0, total, current: batchFiles[0].name });
+
+    const allResults = [];
+    const allErrors  = [];
+    const apiBase = `https://ecg-backend-60i9.onrender.com/api/upload-ecg${user?.email ? `?email=${encodeURIComponent(user.email)}` : ""}`;
+
+    for (let i = 0; i < total; i++) {
+      if (abortBatchRef.current) break;
+      const f = batchFiles[i];
+      setBatchProgress({ done:i, total, current: f.name });
+
+      const entry = { name: f.name, file: f, previewUrl: URL.createObjectURL(f), data: null, error: null };
+
+      try {
+        const fd = new FormData();
+        fd.append("file", f);
+        const res  = await fetch(apiBase, { method:"POST", body:fd });
+        const json = await res.json();
+        if (json.status === "success") {
+          entry.data = json.data;
+        } else {
+          entry.error = json.detail || "Unknown error";
+        }
+      } catch (e) {
+        entry.error = e.message;
+      }
+
+      allResults.push(entry);
+      if (entry.error) allErrors.push({ name:f.name, error:entry.error });
+
+      setBatchResults([...allResults]);
+      setBatchErrors([...allErrors]);
+      setBatchProgress({ done:i+1, total, current: f.name });
+
+      // Auto-show first successful result
+      if (i === 0) {
+        setBatchViewIdx(0);
+        setTab("medical");
+        if (entry.data?.lead_list?.[0]) setSelLead(entry.data.lead_list[0]);
+      }
+    }
+
+    setBatchProcessing(false);
+  }, [batchFiles, user?.email]);
+
+  const stopBatch = () => { abortBatchRef.current = true; };
+
+  /* ── Batch PDF (NEW — all results in one PDF) ── */
+  const handleBatchDownloadPDF = async () => {
+    const successful = batchResults.filter(r => r.data?.signals);
+    if (successful.length === 0) return;
+    setIsPdfGenerating(true);
+
+    try {
+      const { jsPDF } = await import("jspdf");
+
+      // We need to render each ECG into an offscreen canvas to capture it
+      const offscreenCanvas = document.createElement("canvas");
+      const DPR = 2; // render at 2× for quality
+      const CW = 1400, CH = 560;
+      offscreenCanvas.width = CW * DPR;
+      offscreenCanvas.height = CH * DPR;
+
+      const doc = new jsPDF("landscape","mm","a4");
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+
+      for (let idx = 0; idx < successful.length; idx++) {
+        if (idx > 0) doc.addPage("a4","landscape");
+        const r = successful[idx];
+        const rid = getRecordId(r.file);
+        const signals = r.data.signals;
+        const leads   = r.data.lead_list || [];
+
+        // ── Header ──
+        doc.setFillColor(248, 250, 252);
+        doc.rect(0, 0, pageW, 44, "F");
+        doc.setFont("helvetica","bold"); doc.setFontSize(16); doc.setTextColor(31,41,55);
+        doc.text("Automated 12-Lead ECG Analysis Report", 14, 16);
+        doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(107,114,128);
+        const dur = r.data.computed_duration
+          ? `${r.data.computed_duration}s`
+          : (signals?.II ? `${(signals.II.length/500).toFixed(1)}s` : "N/A");
+        doc.text(`File: ${r.name}`, 14, 24);
+        doc.text(`Record ID: ${rid || "Unknown"}`, 14, 30);
+        doc.text(`Date: ${new Date().toLocaleString()}`, 14, 36);
+        doc.text(`Leads: ${leads.length}  |  Duration: ${dur}  |  Side: ${r.data.side_detected || "?"}`, 130, 24);
+        doc.text(`Image ${idx+1} of ${successful.length}`, pageW - 14, 16, { align:"right" });
+        doc.setDrawColor(229,231,235); doc.setLineWidth(0.4); doc.line(14, 42, pageW-14, 42);
+
+        // ── Render ECG to offscreen canvas ──
+        const ctx = offscreenCanvas.getContext("2d");
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        drawMedicalECGToCtx(ctx, CW, CH, signals, leads, rid);
+        const imgData = offscreenCanvas.toDataURL("image/png", 1.0);
+        const margin = 14;
+        const maxW = pageW - margin*2;
+        const imgH = Math.min(maxW * (CH/CW), pageH - 56);
+        doc.addImage(imgData, "PNG", margin, 46, maxW, imgH);
+
+        // ── Footer ──
+        doc.setFontSize(8); doc.setTextColor(156,163,175);
+        doc.text("Generated by ECG AI System", 14, pageH - 6);
+        doc.text(`Page ${idx+1}/${successful.length}`, pageW - 14, pageH - 6, { align:"right" });
+      }
+
+      doc.save(`ECG_Batch_Report_${successful.length}_images.pdf`);
+    } catch (err) {
+      console.error("Batch PDF generation failed:", err);
+      alert("PDF generation failed. Ensure jspdf is installed.");
+    } finally {
+      setIsPdfGenerating(false);
+    }
+  };
+
+  /* ── Single PDF (original, unchanged for single mode) ── */
   const handleDownloadPDF = async () => {
+    if (isBatchMode) return handleBatchDownloadPDF();
     try {
       setIsPdfGenerating(true);
       const { jsPDF } = await import("jspdf");
       const doc = new jsPDF("landscape", "mm", "a4");
       const pageWidth = doc.internal.pageSize.getWidth();
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.setTextColor(31, 41, 55);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(31, 41, 55);
       doc.text("Automated 12-Lead ECG Analysis Report", 14, 20);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.setTextColor(107, 114, 128);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.setTextColor(107, 114, 128);
       const durationText = result.computed_duration
         ? `${result.computed_duration}s`
         : (result.signals?.II ? `${(result.signals.II.length/500).toFixed(1)}s` : "N/A");
@@ -266,9 +441,7 @@ export default function UploadECG() {
       doc.text(`Date of Analysis: ${new Date().toLocaleString()}`, 14, 36);
       doc.text(`Leads Detected: ${result.lead_list?.length || 0}`, 130, 30);
       doc.text(`Computed Duration: ${durationText}`, 130, 36);
-      doc.setDrawColor(229, 231, 235);
-      doc.setLineWidth(0.5);
-      doc.line(14, 42, pageWidth - 14, 42);
+      doc.setDrawColor(229, 231, 235); doc.setLineWidth(0.5); doc.line(14, 42, pageWidth - 14, 42);
       const canvas = document.getElementById("medical-ecg-canvas");
       if (canvas) {
         const imgData = canvas.toDataURL("image/png", 1.0);
@@ -278,8 +451,7 @@ export default function UploadECG() {
         const pdfHeight = maxPdfWidth / canvasRatio;
         doc.addImage(imgData, "PNG", margin, 48, maxPdfWidth, pdfHeight);
       }
-      doc.setFontSize(9);
-      doc.setTextColor(156, 163, 175);
+      doc.setFontSize(9); doc.setTextColor(156, 163, 175);
       doc.text("Generated securely by ECG AI System.", 14, doc.internal.pageSize.getHeight() - 10);
       doc.save(`ECG_Report_${recordId || 'analysis'}.pdf`);
     } catch (err) {
@@ -290,18 +462,23 @@ export default function UploadECG() {
     }
   };
 
+  /* ── Style constants ── */
   const card    = { background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:16, padding:"22px 24px", marginBottom:20, boxShadow:T.cardShadow, width:"100%", boxSizing:"border-box" };
   const cardTtl = { fontSize:11, fontWeight:700, color:T.textMuted, letterSpacing:1, textTransform:"uppercase", marginBottom:14 };
   const statCard= { flex:"1 1 calc(50% - 14px)", minWidth:110, background:T.cardBg, border:`1px solid ${T.cardBorder}`, borderRadius:14, padding:"16px 18px", boxShadow:T.cardShadow, boxSizing:"border-box" };
   const tabBase = { flex:"1 1 auto", textAlign:"center", padding:"8px 14px", borderRadius:9, border:"none", cursor:"pointer", fontSize:11, fontWeight:600, fontFamily:"'DM Sans',sans-serif", transition:"all .15s", whiteSpace:"nowrap" };
 
-  // Pipeline step badge
   const PipelineBadge = ({step, label, active}) => (
     <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:8,background:active?`${T.accent}18`:"transparent",border:`1px solid ${active?T.accent:T.cardBorder}`,fontSize:11,fontWeight:600,color:active?T.accent:T.textMuted,flexShrink:0}}>
       <span style={{width:18,height:18,borderRadius:"50%",background:active?T.accent:T.cardBorder,color:active?"#fff":T.textMuted,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800}}>{step}</span>
       {label}
     </div>
   );
+
+  /* ── Computed display values ── */
+  const batchSuccessCount = batchResults.filter(r => r.data?.signals).length;
+  const showResults       = isBatchMode ? (batchResults.length > 0 && activeResult) : result;
+  const isProcessing      = isBatchMode ? batchProcessing : loading;
 
   return (
     <div style={{fontFamily:"'DM Sans',sans-serif",background:T.pageBg,minHeight:"100vh",padding:"clamp(16px,4vw,32px)",width:"100%",boxSizing:"border-box",overflowX:"hidden",position:"relative"}}>
@@ -339,7 +516,8 @@ export default function UploadECG() {
         </div>
 
         <div style={{display:"flex",gap:12,alignItems:"stretch",flexWrap:"wrap"}}>
-          <label style={{flex:1,minWidth:200,border:`1.5px dashed ${file?T.accent:T.cardBorder}`,borderRadius:10,padding:"13px 18px",cursor:"pointer",fontSize:13,color:file?T.accent:T.textMuted,display:"flex",alignItems:"center",gap:9,background:file?`${T.accent}0e`:T.inputBg,fontWeight:file?500:400,transition:"all .18s"}}>
+          {/* Single file */}
+          <label style={{flex:1,minWidth:160,border:`1.5px dashed ${file?T.accent:T.cardBorder}`,borderRadius:10,padding:"13px 18px",cursor:"pointer",fontSize:13,color:file?T.accent:T.textMuted,display:"flex",alignItems:"center",gap:9,background:file?`${T.accent}0e`:T.inputBg,fontWeight:file?500:400,transition:"all .18s"}}>
             <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
@@ -347,12 +525,44 @@ export default function UploadECG() {
             <input type="file" accept="image/*" style={{display:"none"}} onChange={onFile}/>
           </label>
 
-          <button onClick={onAnalyze} disabled={loading||!file} style={{flex:"1 1 auto",justifyContent:"center",padding:"13px 30px",borderRadius:10,border:"none",background:loading||!file?"#e5e7eb":`linear-gradient(135deg,${T.accent},${T.accentHover})`,color:loading||!file?"#9ca3af":"#fff",fontWeight:700,fontSize:13,cursor:loading||!file?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:loading||!file?"none":`0 2px 14px ${T.accent}44`,transition:"all .18s",whiteSpace:"nowrap"}}>
-            {loading
-              ? <><span style={{display:"inline-block",width:13,height:13,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"ecgspin .7s linear infinite"}}/>{t('upload_processing')}</>
-              : <><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>{t('upload_analyze')}</>
-            }
+          {/* Multi file (NEW) */}
+          <input ref={multiInputRef} type="file" multiple accept="image/*" style={{display:"none"}} onChange={e=>onBatchFiles(e.target.files)}/>
+          <button onClick={()=>multiInputRef.current?.click()} disabled={isProcessing} style={{flex:"0 0 auto",padding:"13px 18px",borderRadius:10,border:`1.5px dashed ${batchFiles.length>0?T.accent:T.cardBorder}`,background:batchFiles.length>0?`${T.accent}0e`:T.inputBg,color:batchFiles.length>0?T.accent:T.textMuted,fontWeight:600,fontSize:12,cursor:isProcessing?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:8,transition:"all .18s",fontFamily:"'DM Sans',sans-serif"}}>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8h20"/></svg>
+            {batchFiles.length > 0 ? `${batchFiles.length} files` : "Multi-File"}
           </button>
+
+          {/* Folder (NEW) */}
+          <input ref={folderInputRef} type="file" webkitdirectory="" directory="" multiple style={{display:"none"}} onChange={e=>onBatchFiles(e.target.files)}/>
+          <button onClick={()=>folderInputRef.current?.click()} disabled={isProcessing} style={{flex:"0 0 auto",padding:"13px 18px",borderRadius:10,border:`1.5px dashed ${T.cardBorder}`,background:T.inputBg,color:T.textMuted,fontWeight:600,fontSize:12,cursor:isProcessing?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:8,transition:"all .18s",fontFamily:"'DM Sans',sans-serif"}}>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+            Folder
+          </button>
+
+          {/* Analyze button — single */}
+          {!isBatchMode && (
+            <button onClick={onAnalyze} disabled={loading||!file} style={{flex:"1 1 auto",justifyContent:"center",padding:"13px 30px",borderRadius:10,border:"none",background:loading||!file?"#e5e7eb":`linear-gradient(135deg,${T.accent},${T.accentHover})`,color:loading||!file?"#9ca3af":"#fff",fontWeight:700,fontSize:13,cursor:loading||!file?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:loading||!file?"none":`0 2px 14px ${T.accent}44`,transition:"all .18s",whiteSpace:"nowrap"}}>
+              {loading
+                ? <><span style={{display:"inline-block",width:13,height:13,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"ecgspin .7s linear infinite"}}/>{t('upload_processing')}</>
+                : <><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>{t('upload_analyze')}</>
+              }
+            </button>
+          )}
+
+          {/* Analyze button — batch (NEW) */}
+          {isBatchMode && !batchProcessing && (
+            <button onClick={onBatchAnalyze} style={{flex:"1 1 auto",justifyContent:"center",padding:"13px 30px",borderRadius:10,border:"none",background:`linear-gradient(135deg,${T.accent},${T.accentHover})`,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:`0 2px 14px ${T.accent}44`,transition:"all .18s",whiteSpace:"nowrap"}}>
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Process {batchFiles.length} Images
+            </button>
+          )}
+
+          {/* Stop button — batch (NEW) */}
+          {batchProcessing && (
+            <button onClick={stopBatch} style={{flex:"0 0 auto",padding:"13px 20px",borderRadius:10,border:"none",background:"#ef4444",color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"'DM Sans',sans-serif"}}>
+              ■ Stop
+            </button>
+          )}
 
           <button onClick={()=>window.open('https://wa.me/918884774504?text='+encodeURIComponent('Hi! I would like to digitize an ECG image.'),'_blank')} style={{flex:"1 1 auto",justifyContent:"center",padding:"13px 30px",borderRadius:10,border:"none",background:"#25D366",color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 2px 14px rgba(37,211,102,0.3)",transition:"all .18s",whiteSpace:"nowrap"}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.405-.883-.733-1.476-1.639-1.649-1.935-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -360,7 +570,23 @@ export default function UploadECG() {
           </button>
         </div>
 
-        {error && (
+        {/* Batch file list summary (NEW) */}
+        {isBatchMode && batchFiles.length > 0 && !batchProcessing && batchResults.length === 0 && (
+          <div style={{marginTop:14,padding:"12px 16px",background:T.inputBg,borderRadius:10,border:`1px solid ${T.divider}`,maxHeight:120,overflowY:"auto"}}>
+            <div style={{fontSize:10,fontWeight:700,color:T.textMuted,letterSpacing:.8,textTransform:"uppercase",marginBottom:8}}>
+              {batchFiles.length} images queued
+            </div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+              {batchFiles.slice(0,30).map((f,i) => (
+                <span key={i} style={{fontSize:10,color:T.textSecondary,background:T.cardBg,border:`1px solid ${T.cardBorder}`,borderRadius:6,padding:"3px 8px",fontFamily:"'DM Mono',monospace"}}>{f.name}</span>
+              ))}
+              {batchFiles.length > 30 && <span style={{fontSize:10,color:T.textMuted,padding:"3px 8px"}}>…and {batchFiles.length-30} more</span>}
+            </div>
+          </div>
+        )}
+
+        {/* Error — single mode */}
+        {!isBatchMode && error && (
           <div style={{marginTop:16,padding:"14px 18px",borderRadius:12,background:"#fef2f2",border:"1px solid #fecaca",display:"flex",alignItems:"center",gap:12,boxShadow:"0 4px 14px rgba(220,38,38,0.08)"}}>
             <div style={{width:28,height:28,borderRadius:"50%",background:"#fee2e2",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#dc2626" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
@@ -372,18 +598,78 @@ export default function UploadECG() {
         )}
       </div>
 
-      {/* Loader */}
-      {loading && (
+      {/* ── Batch progress bar (NEW) ── */}
+      {batchProcessing && (
+        <div style={{...card, padding:"16px 20px", marginBottom:20}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <div style={{fontSize:12,fontWeight:600,color:T.textPrimary}}>
+              Processing: <span style={{fontFamily:"'DM Mono',monospace",color:T.accent}}>{batchProgress.current}</span>
+            </div>
+            <div style={{fontSize:12,fontWeight:700,fontFamily:"'DM Mono',monospace",color:T.accent}}>
+              {batchProgress.done}/{batchProgress.total}
+              <span style={{color:T.textMuted,fontWeight:400,marginLeft:8}}>
+                ({batchSuccessCount} OK{batchErrors.length > 0 ? `, ${batchErrors.length} failed` : ""})
+              </span>
+            </div>
+          </div>
+          <div style={{height:8,borderRadius:4,background:T.inputBg,overflow:"hidden",border:`1px solid ${T.divider}`}}>
+            <div style={{
+              height:"100%",
+              width:`${(batchProgress.done/Math.max(batchProgress.total,1))*100}%`,
+              background:`linear-gradient(90deg, ${T.accent}, ${T.accentHover})`,
+              borderRadius:4, transition:"width 0.3s ease",
+            }}/>
+          </div>
+          {/* Animated ECG line during batch processing */}
+          <div style={{textAlign:"center",marginTop:14}}>
+            <svg width="220" height="40" viewBox="0 0 220 40" style={{overflow:"visible",maxWidth:"100%"}}>
+              <path d="M 0 20 L 40 20 L 50 5 L 65 38 L 85 2 L 105 35 L 115 20 L 220 20" fill="none" stroke={T.divider||"#e5e7eb"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M 0 20 L 40 20 L 50 5 L 65 38 L 85 2 L 105 35 L 115 20 L 220 20" fill="none" stroke={T.accent||"#2563eb"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{strokeDasharray:"600px",strokeDashoffset:"600px",animation:"ecgDraw 2.5s ease-in-out infinite"}}/>
+            </svg>
+          </div>
+        </div>
+      )}
+
+      {/* ── Batch result navigator (NEW) ── */}
+      {isBatchMode && batchResults.length > 1 && (
+        <div style={{...card, padding:"10px 16px", marginBottom:16, display:"flex", alignItems:"center", gap:10, flexWrap:"wrap"}}>
+          <span style={{fontSize:10,fontWeight:700,color:T.textMuted,letterSpacing:.8,textTransform:"uppercase",whiteSpace:"nowrap"}}>
+            Images ({batchResults.length}):
+          </span>
+          <div style={{display:"flex",gap:4,flexWrap:"wrap",flex:1,maxHeight:80,overflowY:"auto"}}>
+            {batchResults.map((r,i) => (
+              <button key={i} onClick={()=>{setBatchViewIdx(i); setSelLead(r.data?.lead_list?.[0]||null);}} title={r.name}
+                style={{
+                  padding:"4px 10px", fontSize:10, fontWeight:600, fontFamily:"'DM Mono',monospace",
+                  border:`1.5px solid ${i===batchViewIdx?T.accent:r.error?'#fca5a5':T.cardBorder}`,
+                  borderRadius:7, cursor:"pointer", whiteSpace:"nowrap", maxWidth:130,
+                  overflow:"hidden", textOverflow:"ellipsis", transition:"all .12s",
+                  background: i===batchViewIdx ? `${T.accent}14` : "transparent",
+                  color: r.error ? "#ef4444" : (i===batchViewIdx ? T.accent : T.textSecondary),
+                }}>
+                {r.name}
+              </button>
+            ))}
+          </div>
+          {/* Prev / Next buttons */}
+          <div style={{display:"flex",gap:6,flexShrink:0}}>
+            <button onClick={()=>{const ni=Math.max(0,batchViewIdx-1);setBatchViewIdx(ni);setSelLead(batchResults[ni]?.data?.lead_list?.[0]||null);}} disabled={batchViewIdx===0}
+              style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${T.cardBorder}`,background:T.inputBg,color:batchViewIdx===0?T.textMuted:T.textPrimary,fontSize:11,fontWeight:700,cursor:batchViewIdx===0?"default":"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+              ← Prev
+            </button>
+            <button onClick={()=>{const ni=Math.min(batchResults.length-1,batchViewIdx+1);setBatchViewIdx(ni);setSelLead(batchResults[ni]?.data?.lead_list?.[0]||null);}} disabled={batchViewIdx>=batchResults.length-1}
+              style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${T.cardBorder}`,background:T.inputBg,color:batchViewIdx>=batchResults.length-1?T.textMuted:T.textPrimary,fontSize:11,fontWeight:700,cursor:batchViewIdx>=batchResults.length-1?"default":"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Loader — single mode only */}
+      {loading && !isBatchMode && (
         <div style={{textAlign:"center",padding:"60px 20px",display:"flex",flexDirection:"column",alignItems:"center",gap:24,background:T.cardBg,borderRadius:16,border:`1px solid ${T.cardBorder}`,boxShadow:T.cardShadow}}>
-          {/* Pipeline steps */}
           <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center"}}>
-            {[
-              {step:1,label:"Grid Detection"},
-              {step:2,label:"YOLO Rows"},
-              {step:3,label:"Lead Crop"},
-              {step:4,label:"Masking"},
-              {step:5,label:"Signal Extract"},
-            ].map((s,i)=>(
+            {[{step:1,label:"Grid Detection"},{step:2,label:"YOLO Rows"},{step:3,label:"Lead Crop"},{step:4,label:"Masking"},{step:5,label:"Signal Extract"}].map((s)=>(
               <PipelineBadge key={s.step} step={s.step} label={s.label} active={true}/>
             ))}
           </div>
@@ -397,17 +683,18 @@ export default function UploadECG() {
         </div>
       )}
 
-      {/* Results */}
-      {result && !loading && (
+      {/* ═══════════════════ RESULTS SECTION ═══════════════════ */}
+      {showResults && !loading && (
         <>
           {/* Stats */}
           <div style={{display:"flex",gap:14,marginBottom:20,flexWrap:"wrap",width:"100%"}}>
             {[
-              {label:t('upload_leads')   ||"Leads",    val: result.lead_list?.length ?? 0},
-              {label:t('upload_samples') ||"Samples",  val: result.signals?.II?.length?.toLocaleString() ?? "—"},
-              {label:t('upload_duration')||"Duration",  val: result.computed_duration ? `${result.computed_duration}s` : result.signals?.II ? `${(result.signals.II.length/500).toFixed(1)}s` : "—"},
+              {label:t('upload_leads')   ||"Leads",    val: activeResult.lead_list?.length ?? 0},
+              {label:t('upload_samples') ||"Samples",  val: activeResult.signals?.II?.length?.toLocaleString() ?? "—"},
+              {label:t('upload_duration')||"Duration",  val: activeResult.computed_duration ? `${activeResult.computed_duration}s` : activeResult.signals?.II ? `${(activeResult.signals.II.length/500).toFixed(1)}s` : "—"},
               {label:t('upload_record')  ||"Record",    val: recordId || "—"},
-              {label:"Valid Leads",                      val: result.valid_leads != null ? `${result.valid_leads}/13` : `${result.lead_list?.length ?? 0}/13`},
+              {label:"Valid Leads",                      val: activeResult.valid_leads != null ? `${activeResult.valid_leads}/13` : `${activeResult.lead_list?.length ?? 0}/13`},
+              ...(isBatchMode ? [{label:"Batch", val:`${batchViewIdx+1}/${batchResults.length}`}] : []),
             ].map(s=>(
               <div key={s.label} style={statCard}>
                 <div style={{fontSize:20,fontWeight:700,color:T.accent,fontFamily:"'DM Mono',monospace"}}>{s.val}</div>
@@ -419,13 +706,7 @@ export default function UploadECG() {
           {/* Pipeline info strip */}
           <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16,padding:"10px 14px",background:T.cardBg,border:`1px solid ${T.cardBorder}`,borderRadius:12,boxShadow:T.cardShadow}}>
             <span style={{fontSize:10,fontWeight:700,color:T.textMuted,letterSpacing:.8,textTransform:"uppercase",marginRight:6,alignSelf:"center"}}>Pipeline:</span>
-            {[
-              {step:1,label:"Roboflow Grid"},
-              {step:2,label:"YOLO Rows"},
-              {step:3,label:"YOLO Leads"},
-              {step:4,label:"nnUNet Mask"},
-              {step:5,label:"Signal Extract"},
-            ].map(s=>(
+            {[{step:1,label:"Roboflow Grid"},{step:2,label:"YOLO Rows"},{step:3,label:"YOLO Leads"},{step:4,label:"nnUNet Mask"},{step:5,label:"Signal Extract"}].map(s=>(
               <PipelineBadge key={s.step} step={s.step} label={s.label} active={true}/>
             ))}
           </div>
@@ -443,7 +724,7 @@ export default function UploadECG() {
           </div>
 
           {/* ── Original Image ── */}
-          {tab==="original" && previewUrl && (
+          {tab==="original" && activePreview && (
             <div style={{animation:"slideIn .2s ease"}}>
               <div style={{fontSize:11,fontWeight:700,color:T.textMuted,letterSpacing:1,textTransform:"uppercase",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
                 Original ECG Image <div style={{flex:1,height:1,background:T.headingLine}}/>
@@ -453,9 +734,9 @@ export default function UploadECG() {
                   <span style={{width:10,height:10,borderRadius:"50%",background:"#ff5f57",display:"inline-block"}}/>
                   <span style={{width:10,height:10,borderRadius:"50%",background:"#febc2e",display:"inline-block"}}/>
                   <span style={{width:10,height:10,borderRadius:"50%",background:"#28c840",display:"inline-block"}}/>
-                  <span style={{marginLeft:8,fontSize:12,color:T.textMuted,fontFamily:"'DM Mono',monospace",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{file?.name}</span>
+                  <span style={{marginLeft:8,fontSize:12,color:T.textMuted,fontFamily:"'DM Mono',monospace",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{activeFile?.name}</span>
                 </div>
-                <img src={previewUrl} alt="Original ECG" style={{width:"100%",display:"block",objectFit:"contain",background:"#fff",padding:12,maxHeight:720,boxSizing:"border-box"}}/>
+                <img src={activePreview} alt="Original ECG" style={{width:"100%",display:"block",objectFit:"contain",background:"#fff",padding:12,maxHeight:720,boxSizing:"border-box"}}/>
               </div>
             </div>
           )}
@@ -465,15 +746,15 @@ export default function UploadECG() {
             <div style={{animation:"slideIn .2s ease"}}>
               <div style={{fontSize:11,fontWeight:700,color:T.textMuted,letterSpacing:1,textTransform:"uppercase",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
                 Step 1 — Roboflow Grid Detection <div style={{flex:1,height:1,background:T.headingLine}}/>
-                {result.grid_bbox && (
+                {activeResult.grid_bbox && (
                   <span style={{fontSize:10,color:T.accent,fontFamily:"'DM Mono',monospace",background:`${T.accent}12`,padding:"3px 8px",borderRadius:6}}>
-                    bbox: [{result.grid_bbox.join(", ")}]
+                    bbox: [{activeResult.grid_bbox.join(", ")}]
                   </span>
                 )}
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(420px,1fr))",gap:14}}>
-                <DebugImage src={result.grid_detect_b64} label="Original + Grid Bounding Box" T={T}/>
-                <DebugImage src={result.grid_crop_b64}   label="Cropped Grid Region (pipeline input)" T={T}/>
+                <DebugImage src={activeResult.grid_detect_b64} label="Original + Grid Bounding Box" T={T}/>
+                <DebugImage src={activeResult.grid_crop_b64}   label="Cropped Grid Region (pipeline input)" T={T}/>
               </div>
               <div style={{marginTop:12,padding:"10px 14px",background:`${T.accent}0a`,border:`1px solid ${T.accent}22`,borderRadius:10,fontSize:12,color:T.textMuted}}>
                 <b style={{color:T.accent}}>What this does:</b> The Roboflow workflow detects the ECG grid area, ignoring headers, labels, and background. All subsequent processing works only on this cropped region, improving accuracy for any lighting or background condition.
@@ -487,7 +768,7 @@ export default function UploadECG() {
               <div style={{fontSize:11,fontWeight:700,color:T.textMuted,letterSpacing:1,textTransform:"uppercase",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
                 Steps 2 & 3 — YOLO Row & Lead Detection <div style={{flex:1,height:1,background:T.headingLine}}/>
               </div>
-              <DebugImage src={result.yolo_detections_b64} label="YOLO: Rows (blue) + 13 Lead Boxes (colored)" T={T}/>
+              <DebugImage src={activeResult.yolo_detections_b64} label="YOLO: Rows (blue) + 13 Lead Boxes (colored)" T={T}/>
               <div style={{marginTop:12,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:8}}>
                 {[
                   {color:"#0078ff",label:"Row Detector",  sub:"4 waveform rows"},
@@ -513,10 +794,10 @@ export default function UploadECG() {
               <div style={{fontSize:11,fontWeight:700,color:T.textMuted,letterSpacing:1,textTransform:"uppercase",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
                 Step 4 — nnUNet Mask Extractions <div style={{flex:1,height:1,background:T.headingLine}}/>
               </div>
-              {result.lead_masks_b64 && Object.keys(result.lead_masks_b64).length > 0 ? (
+              {activeResult.lead_masks_b64 && Object.keys(activeResult.lead_masks_b64).length > 0 ? (
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:14}}>
-                  {ALL13.filter(l => result.lead_masks_b64[l]).map(l => (
-                    <DebugImage key={l} src={result.lead_masks_b64[l]} label={`Lead ${l} Mask`} T={T} />
+                  {ALL13.filter(l => activeResult.lead_masks_b64[l]).map(l => (
+                    <DebugImage key={l} src={activeResult.lead_masks_b64[l]} label={`Lead ${l} Mask`} T={T} />
                   ))}
                 </div>
               ) : (
@@ -532,10 +813,10 @@ export default function UploadECG() {
                 13-Lead Signal Overlay <div style={{flex:1,height:1,background:T.headingLine}}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(265px,1fr))",gap:12}}>
-                {ALL13.filter(l=>result.lead_list?.includes(l)).map(l=>(
+                {ALL13.filter(l=>activeResult.lead_list?.includes(l)).map(l=>(
                   <div key={l} style={{background:"#0d0d1a",borderRadius:12,overflow:"hidden",border:"1px solid #1e1e3a"}}>
                     <div style={{padding:"7px 12px",fontSize:11,fontWeight:700,color:"#00ffcc",fontFamily:"'DM Mono',monospace",letterSpacing:1,background:"rgba(0,255,204,.05)",borderBottom:"1px solid #1e1e3a"}}>Lead {l}</div>
-                    <OverlaySpark data={result.signals?.[l]||[]}/>
+                    <OverlaySpark data={activeResult.signals?.[l]||[]}/>
                   </div>
                 ))}
               </div>
@@ -549,10 +830,10 @@ export default function UploadECG() {
                 All Leads — Individual Waveforms <div style={{flex:1,height:1,background:T.headingLine}}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(255px,1fr))",gap:12}}>
-                {result.lead_list?.map(lead=>{
+                {activeResult.lead_list?.map(lead=>{
                   const sel=selLead===lead;
                   const color=LEAD_COLORS[lead]||T.accent;
-                  const sig=result.signals?.[lead]||[];
+                  const sig=activeResult.signals?.[lead]||[];
                   const v=sig.filter(x=>x!==null&&!isNaN(x));
                   const mn=v.length?Math.min(...v).toFixed(3):"—";
                   const mx=v.length?Math.max(...v).toFixed(3):"—";
@@ -575,11 +856,11 @@ export default function UploadECG() {
                   );
                 })}
               </div>
-              {selLead && result.signals?.[selLead] && (
+              {selLead && activeResult.signals?.[selLead] && (
                 <div style={{marginTop:16,background:T.cardBg,border:`1.5px solid ${T.accent}`,borderRadius:14,padding:18,boxShadow:`0 4px 20px ${T.accent}18`}}>
                   <div style={{fontSize:10,fontWeight:700,color:T.accent,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Expanded — Lead {selLead}</div>
                   <div style={{background:T.inputBg,borderRadius:6,overflow:"hidden"}}>
-                    <Sparkline data={result.signals[selLead]} color={LEAD_COLORS[selLead]||T.accent} height={140} bgColor={T.inputBg}/>
+                    <Sparkline data={activeResult.signals[selLead]} color={LEAD_COLORS[selLead]||T.accent} height={140} bgColor={T.inputBg}/>
                   </div>
                 </div>
               )}
@@ -590,14 +871,16 @@ export default function UploadECG() {
           {tab==="medical" && (
             <div style={{animation:"slideIn .2s ease"}}>
               <div style={{fontSize:11,fontWeight:700,color:T.textMuted,letterSpacing:1,textTransform:"uppercase",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
-                Output Image — Full 12-Lead ECG <div style={{flex:1,height:1,background:T.headingLine}}/>
+                Output Image — Full 12-Lead ECG
+                {isBatchMode && <span style={{fontSize:10,color:T.accent,fontFamily:"'DM Mono',monospace",background:`${T.accent}12`,padding:"3px 8px",borderRadius:6}}>{activeFile?.name}</span>}
+                <div style={{flex:1,height:1,background:T.headingLine}}/>
                 <button onClick={handleDownloadPDF} disabled={isPdfGenerating} style={{padding:"7px 14px",background:isPdfGenerating?"#9ca3af":T.accent,color:"#fff",border:"none",borderRadius:8,fontSize:11,fontWeight:700,cursor:isPdfGenerating?"wait":"pointer",display:"flex",alignItems:"center",gap:6,boxShadow:isPdfGenerating?"none":`0 2px 10px ${T.accent}33`,transition:"all 0.2s"}}>
                   <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                  {isPdfGenerating?"Generating...":"Download Report"}
+                  {isPdfGenerating ? "Generating..." : isBatchMode ? `Download All (${batchSuccessCount} pages)` : "Download Report"}
                 </button>
               </div>
               <div style={{background:"#fce8e8",borderRadius:14,overflow:"hidden",border:"1.5px solid #f0c0c0",boxShadow:"0 4px 20px rgba(0,0,0,.09)",width:"100%",boxSizing:"border-box"}}>
-                <MedicalECG signals={result.signals} leadList={result.lead_list} recordId={recordId}/>
+                <MedicalECG signals={activeResult.signals} leadList={activeResult.lead_list} recordId={recordId} canvasId="medical-ecg-canvas"/>
               </div>
               <div style={{display:"flex",gap:20,marginTop:10,flexWrap:"wrap"}}>
                 {["Row 1: I → aVR → V1 → V4","Row 2: II → aVL → V2 → V5","Row 3: III → aVF → V3 → V6","Row 4: Lead II rhythm strip"].map(tx=>{
@@ -607,16 +890,31 @@ export default function UploadECG() {
               </div>
             </div>
           )}
+
+          {/* Batch errors summary (NEW) */}
+          {isBatchMode && batchErrors.length > 0 && !batchProcessing && (
+            <details style={{marginTop:20,background:T.cardBg,border:`1px solid #fecaca`,borderRadius:12,padding:"12px 16px"}}>
+              <summary style={{color:"#ef4444",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                {batchErrors.length} failed image{batchErrors.length>1?"s":""}
+              </summary>
+              <div style={{marginTop:8,maxHeight:160,overflowY:"auto"}}>
+                {batchErrors.map((e,i)=>(
+                  <div key={i} style={{padding:"4px 0",borderBottom:`1px solid ${T.divider}`,fontSize:11,color:T.textMuted}}>
+                    <span style={{color:"#ef4444",fontFamily:"'DM Mono',monospace"}}>{e.name}:</span> {e.error}
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
         </>
       )}
 
       {/* Empty state */}
-      {!result && !loading && (
+      {!showResults && !loading && !batchProcessing && (
         <div style={{textAlign:"center",padding:"64px 20px",color:T.textMuted}}>
           <div style={{fontSize:52,marginBottom:16}}>🫀</div>
           <h3 style={{fontSize:16,fontWeight:600,color:T.textPrimary,marginBottom:6}}>{t('upload_empty_h')}</h3>
           <p style={{fontSize:13}}>{t('upload_empty_p')}</p>
-          {/* Pipeline overview */}
           <div style={{marginTop:32,display:"flex",justifyContent:"center",gap:0,flexWrap:"wrap"}}>
             {[
               {n:1,icon:"⬛",label:"Grid Detection",sub:"Roboflow isolates ECG area"},
@@ -673,7 +971,6 @@ export default function UploadECG() {
         </div>
       )}
 
-      {/* Large image viewer */}
       {selectedExampleImage && (
         <div onClick={()=>setSelectedExampleImage(null)} style={{position:"fixed",top:0,left:0,right:0,bottom:0,backgroundColor:"rgba(15,23,42,0.8)",backdropFilter:"blur(6px)",zIndex:10000,overflowY:"auto",padding:"40px 20px",animation:"backdropFadeIn 0.2s ease-out"}}>
           <button onClick={()=>setSelectedExampleImage(null)} style={{position:"fixed",top:20,right:20,background:"rgba(15,23,42,0.6)",backdropFilter:"blur(4px)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"50%",width:44,height:44,display:"flex",justifyContent:"center",alignItems:"center",cursor:"pointer",color:"#fff",zIndex:10001}}>
@@ -686,4 +983,84 @@ export default function UploadECG() {
       )}
     </div>
   );
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OFFSCREEN DRAWING — renders Medical ECG to any Canvas2D context
+   Used by batch PDF generation to render each result without DOM canvases
+   ═══════════════════════════════════════════════════════════════════════════ */
+function drawMedicalECGToCtx(ctx, W, H, signals, leadList, recordId) {
+  if (!signals) return;
+  const ROWS = [
+    {leads:["I","aVR","V1","V4"],      labels:["I","aVR","V1","V4"]},
+    {leads:["II_short","aVL","V2","V5"],labels:["II","aVL","V2","V5"]},
+    {leads:["III","aVF","V3","V6"],     labels:["III","aVF","V3","V6"]},
+    {leads:["II"],                       labels:["II"]},
+  ];
+  const RHYTHM = ["II","II_short","I"].find(l=>leadList?.includes(l))||"II";
+  const RR=[1,1,1,0.6], TOTAL=RR.reduce((a,b)=>a+b,0);
+  const MT=50,MB=20,ML=8,MR=8;
+  const PW=W-ML-MR, PH=H-MT-MB;
+  const rowH=RR.map(r=>Math.floor(PH*r/TOTAL));
+  const rowY=[]; let acc=MT; for(const h of rowH){rowY.push(acc);acc+=h;}
+
+  ctx.fillStyle="#fce8e8"; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="#fff8f8"; ctx.fillRect(0,0,W,MT-2);
+  ctx.fillStyle="#888"; ctx.font=`${Math.round(W*.010)}px monospace`;
+  ctx.textAlign="center"; ctx.fillText("Samples",W/2,15);
+  ctx.fillStyle="#1f2937"; ctx.font=`bold ${Math.round(W*.015)}px sans-serif`;
+  ctx.fillText(`Medical Grid ECG | Record: ${recordId||"—"}`,W/2,MT-11);
+
+  function grid(x,y,w,h){
+    const smX=w/250,smY=h/50,lgX=smX*5,lgY=smY*5;
+    ctx.save(); ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip();
+    ctx.strokeStyle="rgba(240,140,140,0.4)"; ctx.lineWidth=0.5;
+    for(let gx=0;gx<=w+1;gx+=smX){ctx.beginPath();ctx.moveTo(x+gx,y);ctx.lineTo(x+gx,y+h);ctx.stroke();}
+    for(let gy=0;gy<=h+1;gy+=smY){ctx.beginPath();ctx.moveTo(x,y+gy);ctx.lineTo(x+w,y+gy);ctx.stroke();}
+    ctx.strokeStyle="rgba(210,60,60,0.62)"; ctx.lineWidth=0.9;
+    for(let gx=0;gx<=w+1;gx+=lgX){ctx.beginPath();ctx.moveTo(x+gx,y);ctx.lineTo(x+gx,y+h);ctx.stroke();}
+    for(let gy=0;gy<=h+1;gy+=lgY){ctx.beginPath();ctx.moveTo(x,y+gy);ctx.lineTo(x+w,y+gy);ctx.stroke();}
+    ctx.restore();
+  }
+  function drawSig(rowData,x,y,w,h){
+    const total=rowData.reduce((s,d)=>s+d.length,0);
+    if(!total) return;
+    ctx.save(); ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip();
+    ctx.beginPath(); ctx.strokeStyle="#111"; ctx.lineWidth=0.9; ctx.lineJoin="round"; ctx.lineCap="round";
+    let gi=0;
+    for(const pts of rowData){
+      for(let i=0;i<pts.length;i++,gi++){
+        const px=x+(gi/total)*w;
+        const v=pts[i]===null||isNaN(pts[i])?0:pts[i];
+        const py=(y+h/2)-v*(h/5);
+        gi===0||i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+      }
+    }
+    ctx.stroke(); ctx.restore();
+  }
+
+  for(let ri=0;ri<ROWS.length;ri++){
+    const rx=ML,ry=rowY[ri],rw=PW,rh=rowH[ri];
+    grid(rx,ry,rw,rh);
+    const isR=ri===3;
+    const rd=isR
+      ?[downsample(clean(signals[RHYTHM]||[]),3000)]
+      :ROWS[ri].leads.map(l=>downsample(clean(getSig(signals,l)),750));
+    drawSig(rd,rx,ry,rw,rh);
+    if(!isR){
+      const sw=rw/4;
+      ROWS[ri].labels.forEach((lbl,ci)=>{
+        ctx.fillStyle="#111"; ctx.font=`bold ${Math.round(W*.012)}px sans-serif`;
+        ctx.textAlign="left"; ctx.fillText(lbl,rx+ci*sw+6,ry+15);
+        if(ci>0){ctx.strokeStyle="#111";ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(rx+ci*sw,ry);ctx.lineTo(rx+ci*sw,ry+rh);ctx.stroke();}
+      });
+    } else {
+      ctx.fillStyle="#111"; ctx.font=`bold ${Math.round(W*.012)}px sans-serif`;
+      ctx.textAlign="left"; ctx.fillText(ROWS[ri].labels[0],rx+6,ry+15);
+    }
+  }
+  ctx.strokeStyle="#ccc"; ctx.lineWidth=1; ctx.strokeRect(ML,MT,PW,PH);
+  ctx.fillStyle="#888"; ctx.font=`${Math.round(W*.009)}px monospace`;
+  ctx.textAlign="right"; ctx.fillText("25 mm/s  ·  10 mm/mV",W-MR-4,H-4);
 }
